@@ -19,7 +19,7 @@ field-level reasons.
 | `204` | Request succeeded; no body (Revoke API key). |
 | `400` | Request was syntactically valid but had no recognized fields, or contained an invalid filter value. |
 | `401` | Missing or malformed `Authorization` header, or the credential is invalid or revoked. |
-| `403` | Token decoded but lacks the required organization context (Clerk JWT only). |
+| `403` | Token decoded but lacks the required organization context, **or** API-key auth was used on an endpoint that requires a Clerk session (currently [Revoke API key](/api/keys/revoke)). |
 | `404` | The resource referenced by the path does not exist within your organization. |
 | `422` | Body failed Pydantic validation — see the per-field detail. |
 | `5xx` | Tumban server error. Retry with backoff. |
@@ -55,6 +55,7 @@ Validation errors (`422`) — `detail` is a list:
 | 401 | `Invalid token` | Clerk JWT failed signature or claim verification. |
 | 401 | `Invalid or revoked API key` | The `sk_…` token is unknown or revoked. |
 | 403 | `Token missing org_id — make sure you have an active organization selected` | Dashboard session has no active org. |
+| 403 | `API key management requires a Clerk session. API keys cannot revoke API keys.` | [Revoke API key](/api/keys/revoke) when called with `sk_…` auth. |
 | 404 | `Scan not found` | [Get scan](/api/scans/get). |
 | 404 | `Batch not found` | [Get batch](/api/scans/batch-get). |
 | 404 | `Org settings not found` | Org settings or usage endpoints. |

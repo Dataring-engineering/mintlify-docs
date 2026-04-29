@@ -28,9 +28,12 @@ treated as a Clerk JWT.
 ## What API keys can do
 
 API keys are scoped to your organization and can call every endpoint in
-this reference. Each request looks up the key by SHA-256 hash, scopes the
-request to the key's organization, and updates the key's `last_used_at`
-timestamp.
+this reference, with one exception: revoking an API key requires a Clerk
+dashboard session. See [Revoke API key](/api/keys/revoke) for the role
+policy.
+
+Each request looks up the key by SHA-256 hash, scopes the request to the
+key's organization, and updates the key's `last_used_at` timestamp.
 
 Revoked keys return `401 Invalid or revoked API key`.
 
@@ -45,6 +48,6 @@ create a new one.
 | Status | Meaning |
 |--------|---------|
 | 401 | Missing `Authorization` header, malformed `Bearer` prefix, or invalid/revoked credential. |
-| 403 | Token decodes but the active organization context is missing (Clerk JWT only — request with an active organization selected). |
+| 403 | Token decodes but the active organization context is missing (Clerk JWT only), **or** API-key auth was used on an endpoint that requires a Clerk session (currently [Revoke API key](/api/keys/revoke)). |
 
 See [Errors](/api/errors) for the full error envelope.

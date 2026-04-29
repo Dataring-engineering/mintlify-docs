@@ -1,0 +1,66 @@
+---
+title: "Create API key"
+description: "Generate a new API key for programmatic access."
+icon: "key"
+---
+
+{/* sources: src/api/routes_auth.py:create_key */}
+
+Generate a new API key. The raw key value is returned **exactly once**
+in the response — store it securely. Tumban only retains the SHA-256
+hash.
+
+```http
+POST /api/v2/org/api-keys
+```
+
+## Request body
+
+<ParamField body="name" type="string" default="default">
+  Human-readable label for the key. Shown in the dashboard and on
+  [List API keys](/api/keys/list).
+</ParamField>
+
+## Response
+
+<ResponseField name="key_id" type="string" required>
+  Stable identifier (`key_<16-hex>`). Use it to revoke the key later.
+</ResponseField>
+
+<ResponseField name="name" type="string" required>
+  The label you provided (or `default`).
+</ResponseField>
+
+<ResponseField name="key" type="string" required>
+  The raw API key value, prefixed `sk_`. **Returned only here, never
+  again.**
+</ResponseField>
+
+<ResponseField name="created_at" type="string" required>
+  ISO 8601 UTC timestamp.
+</ResponseField>
+
+## Example
+
+```bash
+curl -X POST https://api.tumban.com/api/v2/org/api-keys \
+  -H "Authorization: Bearer <clerk-jwt-or-sk-key>" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "ci-pipeline"}'
+```
+
+Status: `201 Created`.
+
+```json
+{
+  "key_id": "key_a1b2c3d4e5f6a7b8",
+  "name": "ci-pipeline",
+  "key": "sk_4f8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b",
+  "created_at": "2026-04-29T12:00:00"
+}
+```
+
+<Warning>
+  The `key` value is shown only on creation. If you lose it, revoke the
+  key and create a new one — there is no recovery.
+</Warning>

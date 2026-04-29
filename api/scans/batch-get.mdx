@@ -1,0 +1,92 @@
+---
+title: "Get batch"
+description: "Fetch a batch's status and per-status counts."
+icon: "list-check"
+---
+
+{/* sources: src/api/routes_v2.py:get_batch_status_v2, src/db/mongodb.py:get_batch */}
+
+Fetch aggregate progress for a batch.
+
+```http
+GET /api/v2/batches/{batch_id}
+```
+
+## Path parameters
+
+<ParamField path="batch_id" type="string" required>
+  The `batch_id` returned by
+  [`POST /api/v2/batch`](/api/scans/batch).
+</ParamField>
+
+## Response
+
+<ResponseField name="batch_id" type="string" required>
+  The batch id you requested.
+</ResponseField>
+
+<ResponseField name="status" type="string" required>
+  `processing` while any profile is in flight; `completed` once every
+  profile has reached a terminal status.
+</ResponseField>
+
+<ResponseField name="total_profiles" type="integer" required>
+  Count of profiles in the batch.
+</ResponseField>
+
+<ResponseField name="completed" type="integer" required>
+  Count of profiles whose scans completed successfully (including
+  `completed_with_partial`).
+</ResponseField>
+
+<ResponseField name="failed" type="integer" required>
+  Count of profiles whose scans failed.
+</ResponseField>
+
+<ResponseField name="in_progress" type="integer" required>
+  Count of profiles still processing.
+</ResponseField>
+
+<ResponseField name="submitted_at" type="string" required>
+  ISO 8601 UTC timestamp of when the batch was submitted.
+</ResponseField>
+
+<ResponseField name="completed_at" type="string">
+  ISO 8601 UTC timestamp of when the last profile reached a terminal
+  status. `null` while the batch is still processing.
+</ResponseField>
+
+<ResponseField name="profile_urls" type="string[]" required>
+  The profile URLs the batch was submitted with, in submission order.
+</ResponseField>
+
+## Example
+
+```bash
+curl https://api.tumban.com/api/v2/batches/9b8a7c6d-1234-5678-9abc-def012345678 \
+  -H "Authorization: Bearer sk_xxx"
+```
+
+```json
+{
+  "batch_id": "9b8a7c6d-1234-5678-9abc-def012345678",
+  "status": "processing",
+  "total_profiles": 3,
+  "completed": 1,
+  "failed": 0,
+  "in_progress": 2,
+  "submitted_at": "2026-04-29T12:00:00",
+  "completed_at": null,
+  "profile_urls": [
+    "https://creator.example/alice",
+    "https://creator.example/bob",
+    "https://creator.example/carol"
+  ]
+}
+```
+
+## Errors
+
+| Status | Detail |
+|--------|--------|
+| 404 | `Batch not found` — the batch id does not exist within your organization. |

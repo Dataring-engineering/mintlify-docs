@@ -1,0 +1,20 @@
+---
+title: "Status values"
+description: "Allowed values for the scan status field."
+icon: "list"
+---
+
+{/* sources: src/models/profile.py:ScanStatusT */}
+
+The `status` field on scan responses and webhook payloads takes one
+of four values:
+
+| Value | Meaning |
+|-------|---------|
+| `processing` | The scan is in flight. You'll only see this on poll responses; Tumban does not deliver webhooks while a scan is processing. |
+| `completed` | All analysis steps finished successfully. Use the triage report directly. |
+| `completed_with_partial` | The scan produced a usable triage report but at least one analysis step failed (timeout, blocked link, transient model error). Inspect [`coverage`](/concepts/coverage) before drawing conclusions about edges. |
+| `failed` | The scan could not produce a triage report. The `error` field explains why; the webhook defaults `recommendation` to `review_high` so the profile still lands in your review queue. |
+
+These values are stable. New statuses, if any, will be added without
+removing existing ones.

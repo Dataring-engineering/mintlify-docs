@@ -1,0 +1,116 @@
+---
+title: "Create batch"
+description: "Submit multiple profile URLs in a single request."
+icon: "layer-group"
+---
+
+{/* sources: src/api/routes_v2.py:create_batch_scan_v2, src/models/profile.py:BatchScanRequestV2,BatchScanResponse */}
+
+Submit multiple profile URLs in one request. The response returns a
+`batch_id` immediately; each profile is processed independently and
+delivers its own webhook.
+
+```http
+POST /api/v2/batch
+```
+
+## Request body
+
+<ParamField body="profile_urls" type="string[]" required>
+  Array of creator profile URLs. Each URL must be a valid HTTP or
+  HTTPS URL.
+</ParamField>
+
+<ParamField body="callback_url" type="string">
+  HTTPS endpoint Tumban will `POST` each result to as profiles
+  complete. Optional: if omitted, Tumban falls back to the
+  organization's [`default_callback_url`](/api/org/update-settings).
+  If neither is set, the batch still runs and individual scans can be
+  polled via [`GET /api/v2/scans/{scan_id}`](/api/scans/get) — no
+  webhooks are sent.
+</ParamField>
+
+<ParamField body="metadata" type="object" default="{}">
+  Arbitrary JSON object applied to every profile in the batch. Echoed
+  back on each per-profile webhook payload.
+</ParamField>
+
+## Response
+
+<ResponseField name="batch_id" type="string" required>
+  UUID of the batch. Use it to fetch aggregate progress via
+  [`GET /api/v2/batches/{batch_id}`](/api/scans/batch-get).
+</ResponseField>
+
+<ResponseField name="status" type="string" required>
+  Always `processing` on submission. See
+  [Status values](/reference/status).
+</ResponseField>
+
+<ResponseField name="total_profiles" type="integer" required>
+  Count of profiles accepted in the batch.
+</ResponseField>
+
+<ResponseField name="submitted_at" type="string" required>
+  ISO 8601 UTC timestamp of when Tumban accepted the batch.
+</ResponseField>
+
+<ResponseField name="estimated_completion" type="string" required>
+  ISO 8601 UTC timestamp of the expected completion time. Scales
+  roughly linearly with batch size at the deployment's concurrency
+  cap.
+</ResponseField>
+
+## Example
+
+<CodeGroup>
+```bash curl
+curl -X POST https://api.tumban.com/api/v2/batch \
+  -H "Authorization: Bearer sk_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "profile_urls": [
+      "https://creator.example/alice",
+      "https://creator.example/bob",
+      "https://creator.example/carol"
+    ],
+    "callback_url": "https://your-app.example/webhooks/tumban",
+    "metadata": {"campaign": "may-sweep"}
+  }'
+```
+
+```python python
+import httpx
+
+response = httpx.post(
+    "https://api.tumban.com/api/v2/batch",
+    headers={"Authorization": "Bearer sk_xxx"},
+    json={
+        "profile_urls": [
+            "https://creator.example/alice",
+            "https://creator.example/bob",
+            "https://creator.example/carol",
+        ],
+        "callback_url": "https://your-app.example/webhooks/tumban",
+        "metadata": {"campaign": "may-sweep"},
+    },
+)
+```
+</CodeGroup>
+
+```json
+{
+  "batch_id": "9b8a7c6d-1234-5678-9abc-def012345678",
+  "status": "processing",
+  "total_profiles": 3,
+  "submitted_at": "2026-04-29T12:00:00",
+  "estimated_completion": "2026-04-29T12:06:00"
+}
+```
+
+<Note>
+  The batch's `scan_id`s are not returned in the response. Read each
+  per-profile result via the webhook callback or by querying
+  [`GET /api/v2/batches/{batch_id}`](/api/scans/batch-get) for
+  aggregate progress.
+</Note>

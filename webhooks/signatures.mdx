@@ -1,0 +1,88 @@
+---
+title: "Signature verification"
+description: "Confirm a webhook payload was sent by Tumban."
+icon: "shield-check"
+---
+
+{/* sources: src/services/webhook.py, src/api/routes_auth.py:rotate_webhook_secret */}
+
+When your organization has a webhook secret configured, Tumban signs
+every webhook body with HMAC SHA-256 and sends the digest in the
+`X-Sherlock-Signature` header.
+
+```http
+X-Sherlock-Signature: sha256=<hex-digest>
+```
+
+The digest is computed over the **raw request body** — verify before
+parsing JSON, since any whitespace or key reordering you apply will
+change the bytes.
+
+## Setting up
+
+1. Call [Rotate webhook secret](/api/webhook-secret/rotate) to obtain a
+   secret. The value is shown exactly once.
+2. Store the secret in your secret manager.
+3. Verify every incoming webhook against it.
+
+## Verification
+
+<CodeGroup>
+```python python
+import hmac
+import hashlib
+
+def verify(secret: str, body: bytes, header_value: str) -> bool:
+    if not header_value or not header_value.startswith("sha256="):
+        return False
+    expected = hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
+    received = header_value.removeprefix("sha256=")
+    return hmac.compare_digest(expected, received)
+```
+
+```js node
+import crypto from "node:crypto";
+
+function verify(secret, body, headerValue) {
+  if (!headerValue?.startsWith("sha256=")) return false;
+  const expected = crypto
+    .createHmac("sha256", secret)
+    .update(body)
+    .digest("hex");
+  const received = headerValue.slice("sha256=".length);
+  return crypto.timingSafeEqual(
+    Buffer.from(expected, "hex"),
+    Buffer.from(received, "hex"),
+  );
+}
+```
+
+```ruby ruby
+require "openssl"
+
+def verify(secret, body, header_value)
+  return false unless header_value&.start_with?("sha256=")
+  expected = OpenSSL::HMAC.hexdigest("sha256", secret, body)
+  received = header_value.delete_prefix("sha256=")
+  Rack::Utils.secure_compare(expected, received)
+end
+```
+</CodeGroup>
+
+Always use a constant-time comparison (`hmac.compare_digest`,
+`crypto.timingSafeEqual`, `Rack::Utils.secure_compare`) to avoid
+timing-attack leakage.
+
+## Rotation
+
+When you rotate the secret, Tumban switches over immediately —
+incoming webhooks are signed with the new secret only. Update your
+verification code first, then call
+[Rotate webhook secret](/api/webhook-secret/rotate).
+
+## When the header is absent
+
+If your organization has no webhook secret configured, Tumban does not
+send the `X-Sherlock-Signature` header. Generate one with
+[Rotate webhook secret](/api/webhook-secret/rotate) before trusting
+webhook bodies in production.

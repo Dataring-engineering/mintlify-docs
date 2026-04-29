@@ -1,0 +1,63 @@
+---
+title: "Errors"
+description: "HTTP status codes returned by the Tumban API."
+icon: "circle-exclamation"
+---
+
+{/* sources: src/api/routes_v2.py, src/api/routes_auth.py, src/auth/clerk.py, src/main.py */}
+
+The Tumban API uses standard HTTP status codes. Failures return a
+JSON body with a `detail` field; validation errors include a list of
+field-level reasons.
+
+## Status codes
+
+| Status | Meaning |
+|--------|---------|
+| `200` | Request succeeded. |
+| `201` | Resource created (Create API key). |
+| `204` | Request succeeded; no body (Revoke API key). |
+| `400` | Request was syntactically valid but had no recognized fields, or contained an invalid filter value. |
+| `401` | Missing or malformed `Authorization` header, or the credential is invalid or revoked. |
+| `403` | Token decoded but lacks the required organization context (Clerk JWT only). |
+| `404` | The resource referenced by the path does not exist within your organization. |
+| `422` | Body failed Pydantic validation — see the per-field detail. |
+| `5xx` | Tumban server error. Retry with backoff. |
+
+## Error envelope
+
+Most errors:
+
+```json
+{ "detail": "Invalid or revoked API key" }
+```
+
+Validation errors (`422`) — `detail` is a list:
+
+```json
+{
+  "detail": [
+    {
+      "field": "profile_url",
+      "msg": "Input should be a valid URL",
+      "type": "url_parsing"
+    }
+  ]
+}
+```
+
+## Common detail strings
+
+| Status | Detail | Where |
+|--------|--------|-------|
+| 401 | `Missing or invalid Authorization header. Expected: Bearer <token>` | All authenticated endpoints. |
+| 401 | `Token has expired` | Clerk JWT is past its exp. |
+| 401 | `Invalid token` | Clerk JWT failed signature or claim verification. |
+| 401 | `Invalid or revoked API key` | The `sk_…` token is unknown or revoked. |
+| 403 | `Token missing org_id — make sure you have an active organization selected` | Dashboard session has no active org. |
+| 404 | `Scan not found` | [Get scan](/api/scans/get). |
+| 404 | `Batch not found` | [Get batch](/api/scans/batch-get). |
+| 404 | `Org settings not found` | Org settings or usage endpoints. |
+| 404 | `API key not found or already revoked` | [Revoke API key](/api/keys/revoke). |
+| 400 | `No fields to update` | [Update org settings](/api/org/update-settings). |
+| 400 | `Invalid recommendation values: [...]` | [List org scans](/api/org/list-scans). |

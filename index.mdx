@@ -1,133 +1,52 @@
 ---
 title: "Introduction"
-description: "Welcome to the new home for your documentation"
-icon: 'star'
+description: "Tumban scans creator profile URLs against Stripe's prohibited and restricted businesses policy and returns a triage recommendation."
+icon: "book-open"
 ---
 
-## Setting up
+{/* sources: src/main.py, src/models/profile.py, src/api/routes_v2.py */}
 
-Get your documentation site up and running in minutes.
+Tumban analyzes a creator profile URL and returns a structured recommendation
+your reviewers can act on. Each scan produces a risk score (0–100), a
+confidence level, reason codes, and an evidence index of the URLs and signals
+behind the decision.
 
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
+## How it works
 
-## Make it yours
+Submit a profile URL. Tumban runs the URL through its scraping, web search,
+link traversal, and multi-strategy detection pipeline and returns the result
+either by webhook or by polling.
 
-Design a docs site that looks great and empowers your users.
+<Steps>
+  <Step title="Submit">
+    Send the profile URL to `POST /api/v2/scan`. You receive a `scan_id`
+    immediately and the scan begins processing in the background.
+  </Step>
+  <Step title="Wait for the result">
+    Tumban delivers the triage report to your `callback_url`, or you can poll
+    `GET /api/v2/scans/{scan_id}` until `status` is no longer `processing`.
+  </Step>
+  <Step title="Triage">
+    Use the `recommendation` (`no_flags`, `review_low`, `review_medium`,
+    `review_high`) plus the `evidence_index` to route the profile to your
+    review queue.
+  </Step>
+</Steps>
 
-<Columns cols={2}>
-  <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
+## Where to start
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Mint an API key, submit a scan, and read the result in under five
+    minutes.
   </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
+  <Card title="Authentication" icon="key" href="/authentication">
+    API keys for server-to-server use, or Clerk JWT for dashboard sessions.
   </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
+  <Card title="API reference" icon="terminal" href="/api/overview">
+    Endpoint-by-endpoint reference, derived from the live handlers.
   </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
+  <Card title="Webhooks" icon="bell" href="/webhooks/payload">
+    Payload format, HMAC verification, and retry behaviour.
   </Card>
-</Columns>
-
-## Create beautiful pages
-
-Everything you need to create world-class documentation.
-
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
-  </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
-  </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
-  </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
-  </Card>
-</Columns>
-
-## Make your content agent ready
-
-Make your docs work for humans and AI agents alike.
-
-<Columns cols={2}>
-  <Card
-    title="Prompt component"
-    icon="robot"
-    href="/agent-ready/prompt"
-  >
-    Embed shareable AI prompts readers can copy or open in Cursor.
-  </Card>
-  <Card
-    title="Visibility"
-    icon="eye"
-    href="/agent-ready/visibility"
-  >
-    Show different content to humans and agents reading your docs.
-  </Card>
-  <Card
-    title="Contextual menu"
-    icon="bolt"
-    href="/agent-ready/contextual"
-  >
-    Give readers one-click access to Claude, ChatGPT, Cursor, and more.
-  </Card>
-  <Card
-    title="AI coding tools"
-    icon="wand-magic-sparkles"
-    href="/ai-tools/claude-code"
-  >
-    Set up Claude Code, Cursor, or Windsurf with Mintlify's skill.
-  </Card>
-</Columns>
-
-## Need inspiration?
-
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+</CardGroup>

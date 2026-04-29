@@ -1,0 +1,108 @@
+---
+title: "Create scan"
+description: "Submit a single profile URL for analysis."
+icon: "circle-play"
+---
+
+{/* sources: src/api/routes_v2.py:create_scan_v2, src/models/profile.py:ScanRequestV2,ScanResponse */}
+
+Submit a single profile URL for ToS compliance analysis. The request
+returns a `scan_id` immediately; processing happens in the background.
+
+```http
+POST /api/v2/scan
+```
+
+## Request body
+
+<ParamField body="profile_url" type="string" required>
+  The creator profile URL to analyze. Must be a valid HTTP or HTTPS URL.
+</ParamField>
+
+<ParamField body="callback_url" type="string">
+  HTTPS endpoint Tumban will `POST` the result to when the scan
+  finishes. Optional: if omitted, Tumban falls back to the
+  organization's [`default_callback_url`](/api/org/update-settings). If
+  neither is set, the scan still runs and the result is available via
+  [`GET /api/v2/scans/{scan_id}`](/api/scans/get) — no webhook is sent.
+</ParamField>
+
+<ParamField body="metadata" type="object" default="{}">
+  Arbitrary JSON object echoed back in the webhook payload and
+  persisted on the scan record. Use it to thread your own correlation
+  ids (`reviewer_id`, `case_id`, etc.) through the pipeline.
+</ParamField>
+
+## Response
+
+<ResponseField name="scan_id" type="string" required>
+  UUID of the scan. Use it to poll
+  [`GET /api/v2/scans/{scan_id}`](/api/scans/get).
+</ResponseField>
+
+<ResponseField name="status" type="string" required>
+  Always `processing` on success. See
+  [Status values](/reference/status).
+</ResponseField>
+
+<ResponseField name="submitted_at" type="string" required>
+  ISO 8601 UTC timestamp of when Tumban accepted the scan.
+</ResponseField>
+
+<ResponseField name="estimated_completion" type="string" required>
+  ISO 8601 UTC timestamp of the expected completion time. The scan
+  typically finishes in under two minutes.
+</ResponseField>
+
+## Example
+
+<CodeGroup>
+```bash curl
+curl -X POST https://api.tumban.com/api/v2/scan \
+  -H "Authorization: Bearer sk_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "profile_url": "https://creator.example/username",
+    "callback_url": "https://your-app.example/webhooks/tumban",
+    "metadata": {"reviewer_id": "rv_42"}
+  }'
+```
+
+```python python
+import httpx
+
+response = httpx.post(
+    "https://api.tumban.com/api/v2/scan",
+    headers={"Authorization": "Bearer sk_xxx"},
+    json={
+        "profile_url": "https://creator.example/username",
+        "callback_url": "https://your-app.example/webhooks/tumban",
+        "metadata": {"reviewer_id": "rv_42"},
+    },
+)
+```
+
+```js node
+const res = await fetch("https://api.tumban.com/api/v2/scan", {
+  method: "POST",
+  headers: {
+    Authorization: "Bearer sk_xxx",
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    profile_url: "https://creator.example/username",
+    callback_url: "https://your-app.example/webhooks/tumban",
+    metadata: { reviewer_id: "rv_42" },
+  }),
+});
+```
+</CodeGroup>
+
+```json
+{
+  "scan_id": "550e8400-e29b-41d4-a716-446655440000",
+  "status": "processing",
+  "submitted_at": "2026-04-29T12:00:00",
+  "estimated_completion": "2026-04-29T12:02:00"
+}
+```

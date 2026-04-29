@@ -1,0 +1,45 @@
+---
+title: "Get usage totals"
+description: "Lifetime scan counters for the organization."
+icon: "chart-simple"
+---
+
+{/* sources: src/api/routes_auth.py:get_usage */}
+
+Return lifetime scan counters for the authenticated organization.
+
+```http
+GET /api/v2/org/usage
+```
+
+## Response
+
+<ResponseField name="total_scans_completed" type="integer" required>
+  Lifetime count of scans that produced a triage report (status
+  `completed` or `completed_with_partial`).
+</ResponseField>
+
+<ResponseField name="total_scans_dropped" type="integer" required>
+  Lifetime count of scans that did not produce a triage report
+  (failures and timeouts).
+</ResponseField>
+
+## Example
+
+```bash
+curl https://api.tumban.com/api/v2/org/usage \
+  -H "Authorization: Bearer sk_xxx"
+```
+
+```json
+{
+  "total_scans_completed": 1284,
+  "total_scans_dropped": 7
+}
+```
+
+## Errors
+
+| Status | Detail |
+|--------|--------|
+| 404 | `Org settings not found`. |

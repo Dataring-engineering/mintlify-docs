@@ -1,0 +1,84 @@
+---
+title: "Evidence index"
+description: "Per-URL evidence the triage report cites."
+icon: "list-tree"
+---
+
+{/* sources: src/services/strategies/llm_decision.py, docs/API_FIELD_REFERENCE.md */}
+
+`evidence_index` is an array of structured entries representing the URLs
+and external context the triage report cites. Use it to render
+reviewer-facing panels without parsing the free-text `reason_summary`.
+
+## Entry shape
+
+Every entry has:
+
+<ResponseField name="url" type="string" required>
+  The cited URL.
+</ResponseField>
+
+<ResponseField name="type" type="string" required>
+  One of `traversed_link`, `external_mention`, `direct_link`, or `unknown`.
+</ResponseField>
+
+<ResponseField name="ref" type="string">
+  When the contextual model cited the entry by reference (`link_3`,
+  `external_mention_2`, …), this field correlates the entry to that
+  reasoning trace.
+</ResponseField>
+
+Type-specific fields:
+
+<Tabs>
+  <Tab title="traversed_link">
+    Includes `domain`. The URL was followed from the profile page or
+    matched via referrer cross-reference.
+  </Tab>
+  <Tab title="external_mention">
+    Includes `platform_type` (e.g. `adult`, `link_aggregator`) and
+    `risk_level` (`LOW`, `MEDIUM`, or `HIGH`). The URL is a site
+    elsewhere on the web that mentions the profile.
+  </Tab>
+  <Tab title="direct_link">
+    Includes `domain` and `category`. The URL appears directly in the
+    profile bio.
+  </Tab>
+  <Tab title="unknown">
+    Rare fallback. Includes a derived `domain`. The entry didn't match
+    any of the buckets above.
+  </Tab>
+</Tabs>
+
+## Example
+
+```json
+"evidence_index": [
+  {
+    "ref": "link_2",
+    "url": "https://prohibited-platform.example/username",
+    "type": "traversed_link",
+    "domain": "prohibited-platform.example"
+  },
+  {
+    "ref": "external_mention_1",
+    "url": "https://forum.example/posts/12345",
+    "type": "external_mention",
+    "platform_type": "adult",
+    "risk_level": "HIGH"
+  },
+  {
+    "url": "https://aggregator.example/username",
+    "type": "direct_link",
+    "domain": "aggregator.example",
+    "category": "link_aggregator"
+  }
+]
+```
+
+## Empty array
+
+`evidence_index` can be `[]` — for example, when only the deterministic
+strategies fired, or when the contextual model hit an infrastructure
+error. Treat an empty array as "no contextual evidence to surface", not
+as a feature failure.

@@ -1,0 +1,170 @@
+---
+title: "Payload format"
+description: "The JSON Tumban POSTs to your callback URL when a scan completes."
+icon: "code"
+---
+
+{/* sources: src/services/webhook.py:_build_payload, src/models/profile.py:WebhookPayload,Coverage */}
+
+When a scan reaches a terminal status (`completed`,
+`completed_with_partial`, or `failed`), Tumban issues a `POST` to the
+scan's `callback_url` with a JSON body. Headers:
+
+- `Content-Type: application/json`
+- `X-Sherlock-Signature: sha256=<hex>` — when the organization has a
+  webhook secret. See [Signature verification](/webhooks/signatures).
+
+## Body
+
+<ResponseField name="scan_id" type="string" required>
+  The scan id you received when submitting.
+</ResponseField>
+
+<ResponseField name="profile_url" type="string" required>
+  The submitted profile URL.
+</ResponseField>
+
+<ResponseField name="status" type="string" required>
+  `completed`, `completed_with_partial`, or `failed`. See
+  [Status values](/reference/status).
+</ResponseField>
+
+<ResponseField name="completed_at" type="string" required>
+  ISO 8601 UTC timestamp.
+</ResponseField>
+
+<ResponseField name="recommendation" type="string" required>
+  See [Recommendation values](/reference/recommendation). On a failed
+  scan, Tumban defaults this to `review_high` so the profile lands in
+  your queue for manual triage.
+</ResponseField>
+
+<ResponseField name="risk_score" type="integer" required>
+  0–100. On a failed scan, defaults to `50`.
+</ResponseField>
+
+<ResponseField name="confidence" type="string" required>
+  `low`, `medium`, or `high`. On a failed scan, defaults to `low`.
+</ResponseField>
+
+<ResponseField name="reason_codes" type="string[]" required>
+  See [Reason codes](/reference/reason-codes). On a failed scan, this
+  is `["SCAN_FAILED"]`.
+</ResponseField>
+
+<ResponseField name="reason_summary" type="string" required>
+  Human-readable summary. On a failed scan, this contains the error
+  message.
+</ResponseField>
+
+<ResponseField name="review_targets" type="string[]" required>
+  URLs your reviewers should look at first. On a failed scan, this is
+  `["manual_investigation_required"]`.
+</ResponseField>
+
+<ResponseField name="link_chain" type="string" required>
+  Short label describing the path Tumban followed (e.g.
+  `Profile → External site`). Empty string on a failed scan.
+</ResponseField>
+
+<ResponseField name="dossier_url" type="string" required>
+  Link to the detailed dossier for this scan.
+  {/* TODO: confirm production dossier URL once the hosted viewer ships — currently returns a relative path */}
+</ResponseField>
+
+<ResponseField name="coverage" type="object" required>
+  Which analysis steps ran. See [Coverage](/concepts/coverage).
+</ResponseField>
+
+<ResponseField name="metadata" type="object" required>
+  The metadata you submitted with the scan, echoed back unchanged.
+</ResponseField>
+
+<ResponseField name="evidence_index" type="object[]">
+  Per-URL evidence the contextual model cited. May be `[]` when only
+  deterministic strategies fired or the contextual model hit an
+  infrastructure error. See [Evidence index](/concepts/evidence-index).
+</ResponseField>
+
+<ResponseField name="error" type="string">
+  Present when `status` is `failed`. Brief description of what went
+  wrong.
+</ResponseField>
+
+<ResponseField name="partial_reason" type="string">
+  Present when `status` is `completed_with_partial`. Brief description
+  of what was skipped.
+</ResponseField>
+
+## Example — completed
+
+```json
+{
+  "scan_id": "550e8400-e29b-41d4-a716-446655440000",
+  "profile_url": "https://creator.example/username",
+  "status": "completed",
+  "completed_at": "2026-04-29T12:01:38",
+  "recommendation": "review_high",
+  "risk_score": 85,
+  "confidence": "high",
+  "reason_codes": ["PROHIBITED_DOMAIN", "ADULT_KEYWORDS"],
+  "reason_summary": "Direct link to a prohibited platform combined with adult keywords in bio.",
+  "review_targets": ["https://prohibited-platform.example/username"],
+  "link_chain": "Profile → External site",
+  "dossier_url": "https://api.tumban.com/scans/550e8400-e29b-41d4-a716-446655440000",
+  "coverage": {
+    "profile_scraped": true,
+    "external_search_completed": true,
+    "social_links_checked": 3,
+    "blocked_by_login": [],
+    "referrer_domains_received": 12,
+    "referrer_domains_after_filter": 4,
+    "referrer_matches_found": 1
+  },
+  "metadata": {"reviewer_id": "rv_42"},
+  "evidence_index": [
+    {
+      "ref": "link_1",
+      "url": "https://prohibited-platform.example/username",
+      "type": "traversed_link",
+      "domain": "prohibited-platform.example"
+    }
+  ]
+}
+```
+
+## Example — failed
+
+```json
+{
+  "scan_id": "550e8400-e29b-41d4-a716-446655440000",
+  "profile_url": "https://creator.example/username",
+  "status": "failed",
+  "completed_at": "2026-04-29T12:01:38",
+  "recommendation": "review_high",
+  "risk_score": 50,
+  "confidence": "low",
+  "reason_codes": ["SCAN_FAILED"],
+  "reason_summary": "timeout_exceeded_450s",
+  "review_targets": ["manual_investigation_required"],
+  "link_chain": "",
+  "dossier_url": "https://api.tumban.com/scans/550e8400-e29b-41d4-a716-446655440000",
+  "coverage": {
+    "profile_scraped": false,
+    "external_search_completed": false,
+    "social_links_checked": 0,
+    "blocked_by_login": [],
+    "referrer_domains_received": 0,
+    "referrer_domains_after_filter": 0,
+    "referrer_matches_found": 0
+  },
+  "metadata": {"reviewer_id": "rv_42"},
+  "error": "timeout_exceeded_450s"
+}
+```
+
+## Acknowledging a webhook
+
+Tumban considers a webhook delivered when your endpoint responds with a
+`2xx` status. Other statuses are retried — see
+[Delivery and retries](/webhooks/delivery).

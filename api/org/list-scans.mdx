@@ -1,0 +1,106 @@
+---
+title: "List org scans"
+description: "List recent scans across the organization."
+icon: "list"
+---
+
+{/* sources: src/api/routes_auth.py:list_org_scans, src/db/mongodb.py:list_org_recent_scans */}
+
+List recent scans for the organization, sorted newest first. Useful for
+populating dashboards and review queues.
+
+```http
+GET /api/v2/org/scans
+```
+
+## Query parameters
+
+<ParamField query="limit" type="integer" default="10">
+  Maximum number of scans to return. Range: `1`–`50`.
+</ParamField>
+
+<ParamField query="recommendation" type="string">
+  Comma-separated list of recommendation values to restrict results to,
+  for example `review_high,review_medium`. Allowed values: `no_flags`,
+  `review_low`, `review_medium`, `review_high`. When this parameter is
+  set, only completed scans are returned.
+</ParamField>
+
+## Response
+
+<ResponseField name="scans" type="object[]" required>
+  List of scan summaries.
+</ResponseField>
+
+<ResponseField name="fetched_at" type="string" required>
+  ISO 8601 UTC timestamp of when the response was generated, with `Z`
+  suffix.
+</ResponseField>
+
+### `scans[]`
+
+<ResponseField name="scan_id" type="string" required>
+  Use with [`GET /api/v2/scans/{scan_id}`](/api/scans/get) to fetch the
+  full record.
+</ResponseField>
+
+<ResponseField name="profile_url" type="string" required>
+  The submitted profile URL.
+</ResponseField>
+
+<ResponseField name="status" type="string" required>
+  See [Status values](/reference/status). Includes `processing` so
+  in-flight scans are visible.
+</ResponseField>
+
+<ResponseField name="submitted_at" type="string" required>
+  ISO 8601 UTC timestamp.
+</ResponseField>
+
+<ResponseField name="completed_at" type="string">
+  ISO 8601 UTC timestamp; `null` if the scan is still processing.
+</ResponseField>
+
+<ResponseField name="recommendation" type="string">
+  See [Recommendation values](/reference/recommendation). `null` for
+  scans that have not produced a triage report.
+</ResponseField>
+
+<ResponseField name="risk_score" type="integer">
+  0–100. `null` for scans without a triage report.
+</ResponseField>
+
+<ResponseField name="confidence" type="string">
+  `low`, `medium`, or `high`. `null` for scans without a triage report.
+</ResponseField>
+
+## Example
+
+```bash
+curl "https://api.tumban.com/api/v2/org/scans?limit=5&recommendation=review_high,review_medium" \
+  -H "Authorization: Bearer sk_xxx"
+```
+
+```json
+{
+  "scans": [
+    {
+      "scan_id": "550e8400-e29b-41d4-a716-446655440000",
+      "profile_url": "https://creator.example/username",
+      "status": "completed",
+      "submitted_at": "2026-04-29T12:00:00",
+      "completed_at": "2026-04-29T12:01:38",
+      "recommendation": "review_high",
+      "risk_score": 85,
+      "confidence": "high"
+    }
+  ],
+  "fetched_at": "2026-04-29T12:34:56Z"
+}
+```
+
+## Errors
+
+| Status | Detail |
+|--------|--------|
+| 400 | `Invalid recommendation values: [...]` — one or more values in `recommendation` are not allowed. |

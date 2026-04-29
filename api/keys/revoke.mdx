@@ -1,0 +1,42 @@
+---
+title: "Revoke API key"
+description: "Permanently revoke an API key."
+icon: "trash"
+---
+
+{/* sources: src/api/routes_auth.py:delete_key, src/db/mongodb.py:revoke_api_key */}
+
+Revoke an API key. Revoked keys are rejected with HTTP `401` on every
+subsequent request and cannot be reactivated.
+
+```http
+DELETE /api/v2/org/api-keys/{key_id}
+```
+
+## Path parameters
+
+<ParamField path="key_id" type="string" required>
+  The `key_id` from [Create API key](/api/keys/create) or
+  [List API keys](/api/keys/list).
+</ParamField>
+
+## Response
+
+`204 No Content` on success. There is no response body.
+
+## Example
+
+```bash
+curl -X DELETE https://api.tumban.com/api/v2/org/api-keys/key_a1b2c3d4e5f6a7b8 \
+  -H "Authorization: Bearer sk_xxx"
+```
+
+<Note>
+  Any organization member can revoke any of the organization's keys.
+</Note>
+
+## Errors
+
+| Status | Detail |
+|--------|--------|
+| 404 | `API key not found or already revoked`. |

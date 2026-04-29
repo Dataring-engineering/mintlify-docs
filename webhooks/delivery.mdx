@@ -1,0 +1,45 @@
+---
+title: "Delivery and retries"
+description: "How Tumban retries webhook delivery and what HTTP statuses it honours."
+icon: "rotate"
+---
+
+{/* sources: src/services/webhook.py:send_webhook,_backoff_seconds,_parse_retry_after */}
+
+Tumban delivers each webhook with up to three attempts. Behaviour by
+response:
+
+| Response | Action |
+|----------|--------|
+| `2xx` | Delivered. No further attempts. |
+| `429 Too Many Requests` | Retry. Tumban honours an integer-seconds `Retry-After` header (capped at 60 s). Without one, falls back to exponential backoff. |
+| Other `4xx` | Not retried. Tumban gives up — fix your endpoint and replay manually if needed. |
+| `5xx` | Retry with exponential backoff. |
+| Connection error or timeout | Retry with exponential backoff. The HTTP timeout per attempt is 30 s. |
+
+## Backoff
+
+Exponential delays between retries: `1s, 2s`, capped at `30s`. Tumban
+sleeps before retries 2 and 3 only — there is no sleep after the
+final attempt.
+
+## What gets delivered after the final retry
+
+If all three attempts fail, the scan record is left with
+`webhook_delivered_at` unset. The scan itself is not affected —
+results remain available via
+[`GET /api/v2/scans/{scan_id}`](/api/scans/get).
+
+## Skipping delivery
+
+If a scan is submitted with no `callback_url` and the organization has
+no [`default_callback_url`](/api/org/update-settings) set, Tumban runs
+the scan to completion but sends no webhook. Read the result by
+polling [`GET /api/v2/scans/{scan_id}`](/api/scans/get) instead.
+
+## Idempotency
+
+Each delivery attempt sends the same body, including the same
+`scan_id`. Treat the `scan_id` as the idempotency key in your
+handler — repeated deliveries for the same scan should be a no-op
+once you've recorded the result.

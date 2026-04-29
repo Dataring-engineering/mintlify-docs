@@ -1,0 +1,30 @@
+---
+title: "Recommendation values"
+description: "Allowed values for the recommendation field, with score thresholds."
+icon: "list"
+---
+
+{/* sources: src/models/profile.py:RecommendationT, src/services/aggregator.py:_map_recommendation */}
+
+The `recommendation` field on triage reports and webhook payloads
+takes one of four values, mapped from the underlying `risk_score`:
+
+| Score | Recommendation | When to act |
+|-------|----------------|-------------|
+| 0–10 | `no_flags` | Auto-approve unless your policy requires sampling. |
+| 11–40 | `review_low` | Borderline. Inspect on capacity-permitting basis. |
+| 41–60 | `review_medium` | Likely violation. Send to review queue. |
+| 61–100 | `review_high` | Strong signals. Priority review. |
+
+These values are stable. The thresholds may be tuned over time; the
+*values* will not change.
+
+## Defaults on failure
+
+When a scan fails (`status: "failed"`), the webhook payload defaults
+`recommendation` to `review_high` and `risk_score` to `50` so the
+profile always reaches your review queue. Use the `error` field to
+distinguish "real" `review_high` from "could not analyze".
+
+See [Recommendations and risk scoring](/concepts/recommendations) for
+how the score is produced.

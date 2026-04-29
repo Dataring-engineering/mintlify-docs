@@ -1,0 +1,76 @@
+---
+title: "List API keys"
+description: "List active API keys for the organization."
+icon: "list"
+---
+
+{/* sources: src/api/routes_auth.py:list_keys, src/db/mongodb.py:list_api_keys */}
+
+List the organization's active (non-revoked) API keys. Key hashes and
+raw values are never returned.
+
+```http
+GET /api/v2/org/api-keys
+```
+
+## Response
+
+<ResponseField name="api_keys" type="object[]" required>
+  List of key metadata records.
+</ResponseField>
+
+### `api_keys[]`
+
+<ResponseField name="key_id" type="string" required>
+  Stable key identifier (`key_<16-hex>`). Pass this to
+  [Revoke API key](/api/keys/revoke).
+</ResponseField>
+
+<ResponseField name="org_id" type="string" required>
+  The owning organization id.
+</ResponseField>
+
+<ResponseField name="name" type="string" required>
+  The label assigned at creation.
+</ResponseField>
+
+<ResponseField name="revoked" type="boolean" required>
+  Always `false` here — this endpoint omits revoked keys.
+</ResponseField>
+
+<ResponseField name="created_at" type="string" required>
+  When the key was created.
+</ResponseField>
+
+<ResponseField name="last_used_at" type="string">
+  Timestamp of the most recent successful authentication with this
+  key. `null` if the key has never been used.
+</ResponseField>
+
+<ResponseField name="created_by" type="string">
+  User id of the creator (Clerk user id), when available. `null` for
+  keys created via the API.
+</ResponseField>
+
+## Example
+
+```bash
+curl https://api.tumban.com/api/v2/org/api-keys \
+  -H "Authorization: Bearer sk_xxx"
+```
+
+```json
+{
+  "api_keys": [
+    {
+      "key_id": "key_a1b2c3d4e5f6a7b8",
+      "org_id": "org_2abc...",
+      "name": "ci-pipeline",
+      "revoked": false,
+      "created_at": "2026-04-29T12:00:00",
+      "last_used_at": "2026-04-29T12:34:56",
+      "created_by": "user_2def..."
+    }
+  ]
+}
+```

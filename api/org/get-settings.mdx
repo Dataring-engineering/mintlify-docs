@@ -1,0 +1,72 @@
+---
+title: "Get org settings"
+description: "Read your organization's settings."
+icon: "gear"
+---
+
+{/* sources: src/api/routes_auth.py:get_settings_route, src/db/mongodb.py:get_org_settings */}
+
+Read the settings for the authenticated organization.
+
+```http
+GET /api/v2/org/settings
+```
+
+## Response
+
+<ResponseField name="org_id" type="string" required>
+  The organization id.
+</ResponseField>
+
+<ResponseField name="default_callback_url" type="string">
+  The webhook URL Tumban falls back to when a scan is submitted
+  without a `callback_url`. `null` if not configured.
+</ResponseField>
+
+<ResponseField name="total_scans_completed" type="integer" required>
+  Lifetime count of scans that finished successfully for this
+  organization.
+</ResponseField>
+
+<ResponseField name="total_scans_dropped" type="integer" required>
+  Lifetime count of scans that did not produce a triage report
+  (failures and timeouts).
+</ResponseField>
+
+<ResponseField name="created_at" type="string" required>
+  When the organization was first seen by Tumban.
+</ResponseField>
+
+<ResponseField name="updated_at" type="string" required>
+  When settings were last modified.
+</ResponseField>
+
+<Note>
+  The webhook signing secret is **never** returned by this endpoint.
+  Use [Rotate webhook secret](/api/webhook-secret/rotate) to obtain a
+  new one.
+</Note>
+
+## Example
+
+```bash
+curl https://api.tumban.com/api/v2/org/settings \
+  -H "Authorization: Bearer sk_xxx"
+```
+
+```json
+{
+  "org_id": "org_2abc...",
+  "default_callback_url": "https://your-app.example/webhooks/tumban",
+  "total_scans_completed": 1284,
+  "total_scans_dropped": 7,
+  "created_at": "2026-01-15T08:32:11",
+  "updated_at": "2026-04-12T17:14:02"
+}
+```
+
+## Errors
+
+| Status | Detail |
+|--------|--------|
+| 404 | `Org settings not found` — the credential is valid but the org has no settings record yet (rare; usually auto-provisioned on first request). |

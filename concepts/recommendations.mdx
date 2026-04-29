@@ -1,0 +1,44 @@
+---
+title: "Recommendations and risk scoring"
+description: "How a 0–100 risk score maps to one of four recommendation tiers."
+icon: "gauge"
+---
+
+{/* sources: src/services/aggregator.py, src/models/profile.py, docs/API_FIELD_REFERENCE.md */}
+
+Every completed scan returns a `recommendation` and a `risk_score` (0–100).
+The recommendation is derived from the score:
+
+| Score range | Recommendation | Suggested action |
+|-------------|----------------|------------------|
+| 0–10 | `no_flags` | No automated signals of violation. Auto-approve unless your policy requires sampling. |
+| 11–40 | `review_low` | Borderline. Inspect on a capacity-permitting basis. |
+| 41–60 | `review_medium` | Likely a violation. Send to your review queue. |
+| 61–100 | `review_high` | Strong signals. Priority review. |
+
+See [Recommendation values](/reference/recommendation) for the canonical
+reference.
+
+## How the score is produced
+
+Tumban runs three independent detection strategies in parallel and takes
+the maximum of their scores. A judge model is invoked on borderline
+aggregated scores (11–70) and may bump the score up or down based on
+contextual analysis.
+
+The score reflects **confidence that a violation exists**, not
+uncertainty. Missing data does not raise the score.
+
+## What `no_flags` does and doesn't mean
+
+`no_flags` means Tumban's automated analysis did not detect a violation.
+It does **not** prove a profile is clean — your manual review process may
+still catch something the pipeline missed.
+
+## Integration tips
+
+- Sort review queues by `risk_score` descending to triage fastest.
+- Watch for `confidence: "low"` ([more](/concepts/confidence)) — those
+  decisions warrant a second look regardless of recommendation tier.
+- Treat `completed_with_partial` results as actionable but inspect the
+  [`coverage`](/concepts/coverage) object first.

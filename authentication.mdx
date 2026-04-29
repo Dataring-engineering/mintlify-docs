@@ -1,0 +1,50 @@
+---
+title: "Authentication"
+description: "Bearer credentials for the Tumban API — API keys for server use, Clerk JWT for dashboard sessions."
+icon: "key"
+---
+
+{/* sources: src/auth/clerk.py, src/api/routes_auth.py */}
+
+All Tumban API requests require an `Authorization: Bearer <token>` header.
+Tumban accepts two token kinds:
+
+- **API keys** (`sk_…`) — long-lived secrets you create in the dashboard
+  or via [Create API key](/api/keys/create). Use these for server-to-server
+  integration.
+- **Clerk JWTs** — short-lived session tokens issued by Clerk to a
+  signed-in dashboard user. Used by the Tumban dashboard. You generally do
+  not handle these directly.
+
+## Header format
+
+```http
+Authorization: Bearer sk_<64-hex-string>
+```
+
+Any token starting with `sk_` is treated as an API key; anything else is
+treated as a Clerk JWT.
+
+## What API keys can do
+
+API keys are scoped to your organization and can call every endpoint in
+this reference. Each request looks up the key by SHA-256 hash, scopes the
+request to the key's organization, and updates the key's `last_used_at`
+timestamp.
+
+Revoked keys return `401 Invalid or revoked API key`.
+
+## Storage
+
+Tumban only stores the SHA-256 hash of an API key. The raw `sk_…` value is
+returned exactly once at creation time. If you lose it, revoke the key and
+create a new one.
+
+## Errors
+
+| Status | Meaning |
+|--------|---------|
+| 401 | Missing `Authorization` header, malformed `Bearer` prefix, or invalid/revoked credential. |
+| 403 | Token decodes but the active organization context is missing (Clerk JWT only — request with an active organization selected). |
+
+See [Errors](/api/errors) for the full error envelope.

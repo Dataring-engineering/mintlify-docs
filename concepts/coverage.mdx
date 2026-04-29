@@ -1,0 +1,59 @@
+---
+title: "Coverage"
+description: "What Tumban actually analyzed during a scan."
+icon: "list-check"
+---
+
+{/* sources: src/models/profile.py:Coverage, src/services/processor.py */}
+
+Every triage report includes a `coverage` object that reports which
+analysis steps ran successfully. Use it to interpret partial results
+honestly.
+
+## Fields
+
+<ResponseField name="profile_scraped" type="boolean" required>
+  `true` if Tumban successfully loaded the profile page and extracted
+  bio, images, and links.
+</ResponseField>
+
+<ResponseField name="external_search_completed" type="boolean" required>
+  `true` if the web search for external mentions of the profile
+  completed.
+</ResponseField>
+
+<ResponseField name="social_links_checked" type="integer" required>
+  Number of linked social profiles whose data Tumban fetched.
+</ResponseField>
+
+<ResponseField name="blocked_by_login" type="string[]">
+  URLs Tumban could not analyze because they required login. Treated as
+  neutral; not used to inflate the risk score.
+</ResponseField>
+
+<ResponseField name="referrer_domains_received" type="integer">
+  Number of referrer domains read from the profile's analytics, when
+  available.
+</ResponseField>
+
+<ResponseField name="referrer_domains_after_filter" type="integer">
+  Referrer domains remaining after Tumban filters out search engines and
+  analytics platforms.
+</ResponseField>
+
+<ResponseField name="referrer_matches_found" type="integer">
+  Referrer domains that matched a known prohibited platform.
+</ResponseField>
+
+## When you'll see partial coverage
+
+If `status` is `completed_with_partial`, at least one step in the
+pipeline failed but the scan still produced a usable triage report.
+Common causes:
+
+- A scraper timed out on a slow page.
+- A linked URL required login and could not be analyzed.
+- A model call hit a transient infrastructure error.
+
+The recommendation and score remain meaningful; check `coverage` for
+which inputs were missing before drawing conclusions about edge cases.

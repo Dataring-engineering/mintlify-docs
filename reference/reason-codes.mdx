@@ -1,0 +1,81 @@
+---
+title: "Reason codes"
+description: "Machine-readable codes that explain a recommendation."
+icon: "tags"
+---
+
+{/* sources: src/services/aggregator.py:_aggregate_reason_codes, src/services/strategies/llm_decision.py, docs/API_FIELD_REFERENCE.md */}
+
+`reason_codes` is a list of short identifiers explaining why a scan
+received its recommendation. Codes can be combined; treat the list as
+an unordered set.
+
+## Categorical codes
+
+Emitted when matching keywords or domains are found.
+
+| Code | Meaning |
+|------|---------|
+| `PROHIBITED_DOMAIN` | A direct link to a domain on Tumban's prohibited list. |
+| `ADULT_KEYWORDS` | Adult-content keywords detected in profile text. |
+| `ADULT_CONTENT_LINK` | Link to an adult-content platform or service. |
+| `ADULT_SERVICES_KEYWORDS` | Adult-services keywords (escort, in-person services). |
+| `EXTERNAL_ADULT_CONTEXT` | Profile is mentioned on adult sites elsewhere on the web. |
+| `PIRACY_KEYWORDS` | Piracy / unlicensed-streaming keywords detected. |
+| `PIRACY_INDICATORS` | Contextual signals of piracy (IPTV, cracked accounts, shared subscriptions). |
+| `GAMBLING_KEYWORDS` | Gambling / wagering keywords detected. |
+| `GAMBLING_INDICATORS` | Contextual signals of gambling. |
+| `COUNTERFEIT_KEYWORDS` | Counterfeit-goods keywords detected. |
+| `COUNTERFEIT_INDICATORS` | Contextual signals of counterfeit goods. |
+| `ACCOUNT_SHARING_KEYWORDS` | Account-sharing or subscription-sharing keywords detected. |
+
+## Pattern codes
+
+Emitted when contextual analysis identifies a violation pattern.
+
+| Code | Meaning |
+|------|---------|
+| `SUSPICIOUS_LINK_CHAIN` | Link path leads to a prohibited destination through one or more redirects. |
+| `EVASION_PATTERN` | High proportion of login-gated links combined with promotional language. |
+| `DARK_FUNNEL_PATTERN` | Profile pushes users to private channels (Telegram, Discord) with vague promotion. |
+
+## Exculpatory and clean codes
+
+| Code | Meaning |
+|------|---------|
+| `EXCULPATORY_CONTEXT` | Prohibited keywords appear, but in journalism, education, advocacy, or past-tense framing. The score is suppressed. |
+| `CLEAN_PROFILE` | Contextual analysis explicitly cleared the profile. |
+
+## Content Safety codes
+
+Emitted when Azure Content Safety flagged a body of text or an image.
+
+| Code | Meaning |
+|------|---------|
+| `CONTENT_SAFETY_TEXT_FLAGGED` | Profile text triggered the content classifier. |
+| `CONTENT_SAFETY_IMAGE_FLAGGED` | Profile or banner image triggered the content classifier. |
+| `CONTENT_FILTER_TRIGGERED` | The contextual model's content filter blocked analysis. |
+| `VIOLENCE_CONTENT` | Content classifier flagged violence. |
+| `HATE_CONTENT` | Content classifier flagged hate speech. |
+| `SELF_HARM_CONTENT` | Content classifier flagged self-harm content. |
+
+## Adjudication codes
+
+Emitted when the judge model adjusted a borderline aggregated score.
+
+| Code | Meaning |
+|------|---------|
+| `JUDGE_BUMP_UP` | Judge raised the score after seeing additional context. |
+| `JUDGE_BUMP_DOWN` | Judge lowered the score after concluding the underlying signal was a false positive. |
+
+## Failure codes
+
+| Code | Meaning |
+|------|---------|
+| `LLM_API_ERROR` | The contextual model failed due to infrastructure (timeout, network, 5xx). Score defaulted to a neutral value. |
+| `SCAN_FAILED` | The scan as a whole could not produce a triage report. Webhook payload only — see the `error` field. |
+
+<Note>
+  New codes may be added over time. Treat unknown codes as
+  informational rather than failing your integration on them.
+</Note>

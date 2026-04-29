@@ -1,0 +1,187 @@
+---
+title: "Get scan"
+description: "Fetch a scan's full result, including the triage report."
+icon: "file-magnifying-glass"
+---
+
+{/* sources: src/api/routes_v2.py:get_scan_v2, src/db/mongodb.py:get_profile_by_scan_id, src/models/profile.py:TriageReport,Coverage */}
+
+Fetch the full record for a scan, including the triage report once the
+scan has completed.
+
+```http
+GET /api/v2/scans/{scan_id}
+```
+
+## Path parameters
+
+<ParamField path="scan_id" type="string" required>
+  The `scan_id` returned by
+  [`POST /api/v2/scan`](/api/scans/create) or one of the per-profile
+  ids from a batch.
+</ParamField>
+
+## Response
+
+The response is the scan record. Fields you should rely on:
+
+<ResponseField name="profile_id" type="string" required>
+  Same value as `scan_id`. Tumban tracks scans and profile records
+  under the same identifier.
+</ResponseField>
+
+<ResponseField name="batch_id" type="string" required>
+  The batch id. For single scans this is `single_<scan_id>`.
+</ResponseField>
+
+<ResponseField name="url" type="string" required>
+  The submitted profile URL.
+</ResponseField>
+
+<ResponseField name="status" type="string" required>
+  See [Status values](/reference/status).
+</ResponseField>
+
+<ResponseField name="created_at" type="string" required>
+  ISO 8601 UTC timestamp of when the scan was submitted.
+</ResponseField>
+
+<ResponseField name="processing_started_at" type="string">
+  When pipeline processing actually began. `null` while waiting for a
+  concurrency slot.
+</ResponseField>
+
+<ResponseField name="processing_completed_at" type="string">
+  When pipeline processing finished. `null` while still processing.
+</ResponseField>
+
+<ResponseField name="callback_url" type="string">
+  The callback URL the scan was submitted with (or the org default if
+  not provided), as a string. Empty when no callback was configured.
+</ResponseField>
+
+<ResponseField name="metadata" type="object">
+  The metadata you submitted with the scan, echoed back unchanged.
+</ResponseField>
+
+<ResponseField name="error" type="string">
+  Present when `status` is `failed`. Brief description of what went
+  wrong.
+</ResponseField>
+
+<ResponseField name="webhook_delivered_at" type="string">
+  ISO 8601 UTC timestamp of successful webhook delivery. Absent when
+  no callback was configured or delivery has not (yet) succeeded.
+</ResponseField>
+
+<ResponseField name="triage_report" type="object">
+  Present once `status` is `completed` or `completed_with_partial`.
+  Shape below.
+</ResponseField>
+
+### `triage_report`
+
+<ResponseField name="recommendation" type="string" required>
+  One of `no_flags`, `review_low`, `review_medium`, `review_high`. See
+  [Recommendation values](/reference/recommendation).
+</ResponseField>
+
+<ResponseField name="risk_score" type="integer" required>
+  0–100. See [Recommendations](/concepts/recommendations).
+</ResponseField>
+
+<ResponseField name="confidence" type="string" required>
+  `low`, `medium`, or `high`. See [Confidence](/concepts/confidence).
+</ResponseField>
+
+<ResponseField name="reason_codes" type="string[]" required>
+  Machine-readable codes explaining the decision. See
+  [Reason codes](/reference/reason-codes).
+</ResponseField>
+
+<ResponseField name="reason_summary" type="string" required>
+  Human-readable summary of what was found.
+</ResponseField>
+
+<ResponseField name="review_targets" type="string[]" required>
+  URLs your reviewers should look at first.
+</ResponseField>
+
+<ResponseField name="link_chain" type="string" required>
+  Short label describing the path Tumban followed (e.g.
+  `Profile → External site`).
+</ResponseField>
+
+<ResponseField name="evidence_index" type="object[]">
+  Per-URL evidence the contextual model cited. See
+  [Evidence index](/concepts/evidence-index).
+</ResponseField>
+
+<ResponseField name="strategy_scores" type="object" required>
+  Internal per-strategy scores: `blocklist`, `content_safety`, `llm`.
+  Useful for debugging unexpected recommendations.
+</ResponseField>
+
+<ResponseField name="judge_model_invoked" type="boolean" required>
+  Whether the judge model was invoked to resolve a borderline score.
+</ResponseField>
+
+## Coverage
+
+The scan record's `triage_report` does **not** include `coverage` —
+that field is delivered as a top-level key in the
+[webhook payload](/webhooks/payload). When polling, inspect
+`status === "completed_with_partial"` to know whether anything was
+skipped.
+
+## Example
+
+```bash
+curl https://api.tumban.com/api/v2/scans/550e8400-e29b-41d4-a716-446655440000 \
+  -H "Authorization: Bearer sk_xxx"
+```
+
+```json
+{
+  "profile_id": "550e8400-e29b-41d4-a716-446655440000",
+  "batch_id": "single_550e8400-e29b-41d4-a716-446655440000",
+  "url": "https://creator.example/username",
+  "status": "completed",
+  "created_at": "2026-04-29T12:00:00",
+  "processing_started_at": "2026-04-29T12:00:01",
+  "processing_completed_at": "2026-04-29T12:01:38",
+  "callback_url": "https://your-app.example/webhooks/tumban",
+  "metadata": {"reviewer_id": "rv_42"},
+  "webhook_delivered_at": "2026-04-29T12:01:39",
+  "triage_report": {
+    "recommendation": "review_high",
+    "risk_score": 85,
+    "confidence": "high",
+    "reason_codes": ["PROHIBITED_DOMAIN", "ADULT_KEYWORDS"],
+    "reason_summary": "Direct link to a prohibited platform combined with adult keywords in bio.",
+    "review_targets": ["https://prohibited-platform.example/username"],
+    "link_chain": "Profile → External site",
+    "strategy_scores": {"blocklist": 50, "content_safety": 0, "llm": 85},
+    "judge_model_invoked": false,
+    "evidence_index": [
+      {
+        "ref": "link_1",
+        "url": "https://prohibited-platform.example/username",
+        "type": "traversed_link",
+        "domain": "prohibited-platform.example"
+      }
+    ]
+  }
+}
+```
+
+<Note>
+  Additional internal fields may appear in the response. Treat unknown
+  fields as opaque and forward-compatible.
+</Note>
+
+## Errors
+
+| Status | Detail |
+|--------|--------|
+| 404 | `Scan not found` — the scan id does not exist within your organization. |

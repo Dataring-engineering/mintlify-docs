@@ -1,0 +1,48 @@
+---
+title: "Scans and batches"
+description: "How a scan progresses from submission to a final triage report."
+icon: "arrow-progress"
+---
+
+{/* sources: src/api/routes_v2.py, src/api/shared.py, src/models/profile.py */}
+
+A **scan** is a single profile URL being analyzed. A **batch** is a set of
+scans submitted together; each profile in a batch is processed
+independently.
+
+## Lifecycle
+
+When you submit a scan, Tumban returns a `scan_id` and begins processing
+asynchronously. The scan moves through these statuses:
+
+| Status | Meaning |
+|--------|---------|
+| `processing` | The scan is in flight. |
+| `completed` | All analysis steps finished successfully. |
+| `completed_with_partial` | Result is usable, but at least one step failed (timeout, blocked link, etc). Inspect the [`coverage`](/concepts/coverage) object to see what was skipped. |
+| `failed` | The scan could not produce a triage report. The `error` field explains why. |
+
+See [Status values](/reference/status) for the canonical reference.
+
+## Concurrency and timing
+
+Tumban processes scans concurrently and enforces a hard 450-second timeout
+per scan. A typical scan completes in under two minutes.
+
+If you submit a batch of N profiles, the estimated completion time scales
+roughly linearly with batch size while staying within the concurrency cap.
+
+## Identifiers
+
+- `scan_id` — UUID returned from `POST /api/v2/scan`. Use it to fetch the
+  scan via [`GET /api/v2/scans/{scan_id}`](/api/scans/get).
+- `batch_id` — UUID returned from `POST /api/v2/batch`. Single scans get a
+  synthetic `single_<scan_id>` batch id for internal bookkeeping; you don't
+  need it for single scans.
+
+## Deduplication
+
+Tumban canonicalizes the submitted URL and treats the canonical form as a
+unique key per organization. Re-submitting the same canonical URL archives
+the previous scan and starts a new one, so the most recent result is
+always the one you read back.

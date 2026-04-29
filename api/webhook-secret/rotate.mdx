@@ -1,0 +1,52 @@
+---
+title: "Rotate webhook secret"
+description: "Generate a new HMAC secret for verifying webhook payloads."
+icon: "rotate"
+---
+
+{/* sources: src/api/routes_auth.py:rotate_webhook_secret */}
+
+Generate a fresh webhook signing secret for the organization. The new
+secret is returned **exactly once** in the response — Tumban does not
+expose it via [Get org settings](/api/org/get-settings).
+
+```http
+POST /api/v2/org/webhook-secret/rotate
+```
+
+## Request body
+
+None.
+
+## Response
+
+<ResponseField name="webhook_secret" type="string" required>
+  The new secret (64-character hex string). Use it to verify the
+  signature on incoming webhooks. See
+  [Signature verification](/webhooks/signatures).
+</ResponseField>
+
+<ResponseField name="rotated_at" type="string" required>
+  ISO 8601 UTC timestamp.
+</ResponseField>
+
+## Example
+
+```bash
+curl -X POST https://api.tumban.com/api/v2/org/webhook-secret/rotate \
+  -H "Authorization: Bearer sk_xxx"
+```
+
+```json
+{
+  "webhook_secret": "5f4dcc3b5aa765d61d8327deb882cf99...",
+  "rotated_at": "2026-04-29T12:00:00"
+}
+```
+
+<Warning>
+  Update your verification code **before** rotating, or accept a brief
+  window where signatures will not verify. Tumban signs every new
+  webhook with the current secret only — old secrets become inactive
+  immediately.
+</Warning>

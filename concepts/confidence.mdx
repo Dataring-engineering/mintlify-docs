@@ -1,0 +1,37 @@
+---
+title: "Confidence"
+description: "How confident Tumban is in a recommendation."
+icon: "gauge-simple-high"
+---
+
+{/* sources: src/services/aggregator.py:_determine_confidence */}
+
+Every triage report includes a `confidence` field with one of three
+values:
+
+| Value | Meaning |
+|-------|---------|
+| `high` | Multiple strategies agree, or a strong deterministic signal was found. Also `high` for a clean profile (`no_flags`). |
+| `medium` | Aggregated score is 60+ from a single strategy, or the contextual model returned high confidence. |
+| `low` | Single weak signal, or a borderline case where the judge model could not resolve the ambiguity. |
+
+## How it's derived
+
+Tumban determines confidence after aggregation:
+
+- Multiple strategies (≥ 2) returning a non-zero score → `high`.
+- A strong deterministic match (blocklist score ≥ 85) → `high`.
+- Aggregated score ≥ 60 from one strategy → `medium`.
+- Borderline case adjudicated by the judge model → judge's own confidence
+  level (`low` or `medium`).
+- Single weak signal (score > 0 but no other corroboration) → `low`.
+- No flags detected → `high` confidence in `no_flags`.
+
+## When to use it
+
+Use `confidence` to weight your review priority within a recommendation
+tier. A `review_high` with `confidence: "high"` is worth processing
+before a `review_high` with `confidence: "low"`.
+
+For `no_flags`, a low confidence value is not produced — Tumban only
+reports clean when nothing fired.

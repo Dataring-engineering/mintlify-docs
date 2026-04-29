@@ -1,0 +1,53 @@
+---
+title: "Get warmer health"
+description: "Liveness probe for the usage stats pre-aggregator."
+icon: "heart-pulse"
+---
+
+{/* sources: src/api/routes_auth.py:get_warmer_health */}
+
+Tumban pre-computes the timeseries powering
+[Get scan timeseries](/api/usage/scans) and
+[Get priority distribution](/api/usage/priority) in a background
+worker. This endpoint reports whether each loop is alive.
+
+```http
+GET /api/v2/org/health/warmer
+```
+
+## Response
+
+<ResponseField name="scans" type="object" required>
+  Status of the scan-counts aggregation loop.
+</ResponseField>
+
+<ResponseField name="priority" type="object" required>
+  Status of the priority-distribution aggregation loop.
+</ResponseField>
+
+### Each entry
+
+<ResponseField name="alive" type="boolean" required>
+  `true` if the loop has written its heartbeat key recently. When
+  `false`, usage endpoints fall back to live aggregation and may be
+  slower.
+</ResponseField>
+
+<ResponseField name="last_seen" type="string">
+  ISO 8601 UTC timestamp of the last heartbeat. `null` if no
+  heartbeat has been seen.
+</ResponseField>
+
+## Example
+
+```bash
+curl https://api.tumban.com/api/v2/org/health/warmer \
+  -H "Authorization: Bearer sk_xxx"
+```
+
+```json
+{
+  "scans":    {"alive": true,  "last_seen": "2026-04-29T12:00:00Z"},
+  "priority": {"alive": true,  "last_seen": "2026-04-29T11:45:00Z"}
+}
+```

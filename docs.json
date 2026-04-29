@@ -1,120 +1,131 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
-  "name": "Mintlify Starter Kit",
+  "name": "Tumban",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#e95d31",
+    "light": "#e95d31",
+    "dark": "#080f1f"
   },
-  "favicon": "/favicon.svg",
+  "favicon": "/favicon.ico",
   "navigation": {
     "tabs": [
       {
-        "tab": "Guides",
+        "tab": "Docs",
         "groups": [
           {
-            "group": "Getting started",
+            "group": "Get started",
             "pages": [
               "index",
               "quickstart",
-              "development"
+              "authentication"
             ]
           },
           {
-            "group": "Customization",
+            "group": "Core concepts",
             "pages": [
-              "essentials/settings",
-              "essentials/navigation"
+              "concepts/scans-and-batches",
+              "concepts/recommendations",
+              "concepts/confidence",
+              "concepts/coverage",
+              "concepts/evidence-index"
             ]
           },
           {
-            "group": "Writing content",
+            "group": "API reference",
             "pages": [
-              "essentials/markdown",
-              "essentials/code",
-              "essentials/images",
-              "essentials/components",
-              "essentials/reusable-snippets"
+              "api/overview",
+              {
+                "group": "Scans",
+                "pages": [
+                  "api/scans/create",
+                  "api/scans/batch",
+                  "api/scans/get",
+                  "api/scans/batch-get"
+                ]
+              },
+              {
+                "group": "Org settings",
+                "pages": [
+                  "api/org/get-settings",
+                  "api/org/update-settings",
+                  "api/org/list-scans"
+                ]
+              },
+              {
+                "group": "API keys",
+                "pages": [
+                  "api/keys/create",
+                  "api/keys/list",
+                  "api/keys/revoke"
+                ]
+              },
+              {
+                "group": "Webhook secret",
+                "pages": [
+                  "api/webhook-secret/rotate"
+                ]
+              },
+              {
+                "group": "Usage",
+                "pages": [
+                  "api/usage/totals",
+                  "api/usage/scans",
+                  "api/usage/priority",
+                  "api/usage/warmer-health"
+                ]
+              },
+              "api/errors"
             ]
           },
           {
-            "group": "Agent ready",
+            "group": "Webhooks",
             "pages": [
-              "agent-ready/prompt",
-              "agent-ready/visibility",
-              "agent-ready/contextual",
-              "ai-tools/cursor",
-              "ai-tools/claude-code",
-              "ai-tools/windsurf"
-            ]
-          }
-        ]
-      },
-      {
-        "tab": "API reference",
-        "groups": [
-          {
-            "group": "API documentation",
-            "pages": [
-              "api-reference/introduction"
+              "webhooks/payload",
+              "webhooks/signatures",
+              "webhooks/delivery"
             ]
           },
           {
-            "group": "Endpoint examples",
+            "group": "Reference",
             "pages": [
-              "api-reference/endpoint/get",
-              "api-reference/endpoint/create",
-              "api-reference/endpoint/delete",
-              "api-reference/endpoint/webhook"
+              "reference/status",
+              "reference/recommendation",
+              "reference/reason-codes"
             ]
           }
         ]
       }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
-        },
-        {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
-        }
-      ]
-    }
+    ]
   },
   "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
+    "light": "/logo/light.png",
+    "dark": "/logo/dark.png"
   },
   "navbar": {
     "links": [
       {
         "label": "Support",
-        "href": "mailto:hi@mintlify.com"
+        "href": "mailto:hello@tumban.com"
       }
     ],
     "primary": {
       "type": "button",
       "label": "Dashboard",
-      "href": "https://dashboard.mintlify.com"
+      "href": "https://platform.tumban.com"
     }
   },
   "contextual": {
     "options": [
-     "copy",
-     "view",
-     "chatgpt",
-     "claude",
-     "perplexity",
-     "mcp",
-     "cursor",
-     "vscode"
-   ]
+      "copy",
+      "view",
+      "chatgpt",
+      "claude",
+      "perplexity",
+      "mcp",
+      "cursor",
+      "vscode"
+    ]
   },
   "footer": {
     "socials": {

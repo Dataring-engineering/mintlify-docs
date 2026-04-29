@@ -1,0 +1,67 @@
+---
+title: "Overview"
+description: "Base URL, authentication, content type, and error envelope."
+icon: "circle-info"
+---
+
+{/* sources: src/main.py, src/api/routes_v2.py, src/api/routes_auth.py */}
+
+## Base URL
+
+```
+https://api.tumban.com
+```
+
+All v2 endpoints are mounted under `/api/v2`.
+
+## Authentication
+
+Every request requires an `Authorization: Bearer <token>` header.
+
+```http
+Authorization: Bearer sk_<64-hex-string>
+```
+
+See [Authentication](/authentication) for the full description.
+
+## Content type
+
+Request and response bodies are JSON. Send
+`Content-Type: application/json` on `POST` and `PATCH`.
+
+## Error envelope
+
+Errors return a JSON object with a `detail` field:
+
+```json
+{ "detail": "Invalid or revoked API key" }
+```
+
+Validation errors (HTTP 422) return a list of failed fields under
+`detail`:
+
+```json
+{
+  "detail": [
+    {
+      "field": "profile_url",
+      "msg": "Input should be a valid URL",
+      "type": "url_parsing"
+    }
+  ]
+}
+```
+
+See [Errors](/api/errors) for the status-code reference.
+
+## Async processing
+
+Endpoints that submit work (`/scan`, `/batch`) return immediately with a
+status of `processing` and an estimated completion time. The final
+result is delivered either by webhook to your `callback_url` or by
+polling [`GET /api/v2/scans/{scan_id}`](/api/scans/get).
+
+## Tenancy
+
+Every request is scoped to the organization that owns the credential.
+You cannot read or list resources from another organization.

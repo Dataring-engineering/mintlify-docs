@@ -26,15 +26,15 @@ DELETE /api/v2/org/api-keys/{key_id}
 
 ## Permissions
 
-Revoking an API key requires a Clerk dashboard session — API-key auth
+Revoking an API key requires a dashboard session — API-key auth
 (`Authorization: Bearer sk_…`) is not accepted on this endpoint. This
 prevents a leaked API key from being used to revoke every other key in
 the organization.
 
 | Caller | Scope |
 |--------|-------|
-| Clerk session, `role=admin` | May revoke any key in the organization. |
-| Clerk session, `role=member` | May revoke **only keys they created themselves**. |
+| Dashboard session, `role=admin` | May revoke any key in the organization. |
+| Dashboard session, `role=member` | May revoke **only keys they created themselves**. |
 | API key (`sk_…`) | Rejected with `403`. |
 
 When a member targets a key they did not create, Tumban responds `404`
@@ -45,12 +45,12 @@ enumerate other users' `key_id`s.
 
 ```bash
 curl -X DELETE https://api.tumban.com/api/v2/org/api-keys/key_a1b2c3d4e5f6a7b8 \
-  -H "Authorization: Bearer <clerk-jwt>"
+  -H "Authorization: Bearer <session-token>"
 ```
 
 ## Errors
 
 | Status | Detail |
 |--------|--------|
-| 403 | `API key management requires a Clerk session. API keys cannot revoke API keys.` |
+| 403 | `API key management requires a dashboard session. API keys cannot revoke API keys.` |
 | 404 | `API key not found or already revoked` (also returned to a member targeting another user's key). |

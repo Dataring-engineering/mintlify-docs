@@ -1,6 +1,6 @@
 ---
 title: "Authentication"
-description: "Bearer credentials for the Tumban API — API keys for server use, Clerk JWT for dashboard sessions."
+description: "Bearer credentials for the Tumban API — API keys for server use, session tokens for dashboard sessions."
 icon: "key"
 ---
 
@@ -12,9 +12,9 @@ Tumban accepts two token kinds:
 - **API keys** (`sk_…`) — long-lived secrets you create in the dashboard
   or via [Create API key](/api/keys/create). Use these for server-to-server
   integration.
-- **Clerk JWTs** — short-lived session tokens issued by Clerk to a
-  signed-in dashboard user. Used by the Tumban dashboard. You generally do
-  not handle these directly.
+- **Session tokens** — short-lived credentials issued to a signed-in
+  dashboard user. Used by the Tumban dashboard. You generally do not
+  handle these directly.
 
 ## Header format
 
@@ -23,12 +23,12 @@ Authorization: Bearer sk_<64-hex-string>
 ```
 
 Any token starting with `sk_` is treated as an API key; anything else is
-treated as a Clerk JWT.
+treated as a session token.
 
 ## What API keys can do
 
 API keys are scoped to your organization and can call every endpoint in
-this reference, with one exception: revoking an API key requires a Clerk
+this reference, with one exception: revoking an API key requires a
 dashboard session. See [Revoke API key](/api/keys/revoke) for the role
 policy.
 
@@ -48,6 +48,6 @@ create a new one.
 | Status | Meaning |
 |--------|---------|
 | 401 | Missing `Authorization` header, malformed `Bearer` prefix, or invalid/revoked credential. |
-| 403 | Token decodes but the active organization context is missing (Clerk JWT only), **or** API-key auth was used on an endpoint that requires a Clerk session (currently [Revoke API key](/api/keys/revoke)). |
+| 403 | Token decodes but the active organization context is missing (session tokens only), **or** API-key auth was used on an endpoint that requires a dashboard session (currently [Revoke API key](/api/keys/revoke)). |
 
 See [Errors](/api/errors) for the full error envelope.

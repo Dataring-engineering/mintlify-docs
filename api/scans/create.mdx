@@ -106,3 +106,26 @@ const res = await fetch("https://api.tumban.com/api/v2/scan", {
   "estimated_completion": "2026-04-29T12:02:00"
 }
 ```
+
+## Using the dashboard
+
+<Steps>
+  <Step title="Open Scan">
+    From the sidebar, click **Scan**.
+  </Step>
+  <Step title="Submit a profile URL">
+    In the **Submit Scan** tile, paste the profile URL into the
+    **Profile URL** field. By default the result is delivered via
+    your organization's [default callback URL](/api/org/update-settings).
+
+    To override per-scan, toggle **Send result to callback URL** on
+    and enter a URL in the revealed **Callback URL** field.
+  </Step>
+  <Step title="Submit and watch">
+    Click **Submit Scan**. The new row appears at the top of the
+    **Scans** table with status **Processing**. The page polls in-flight
+    rows every five seconds and updates them in place. Click the row
+    once it reaches a terminal status to open
+    [Get scan](/api/scans/get) detail.
+  </Step>
+</Steps>

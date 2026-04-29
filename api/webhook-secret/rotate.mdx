@@ -14,6 +14,17 @@ expose it via [Get org settings](/api/org/get-settings).
 POST /api/v2/org/webhook-secret/rotate
 ```
 
+## Permissions
+
+Rotating the webhook secret requires an admin role on a dashboard
+session. Members and API-key auth are rejected with `403`.
+
+| Caller | Allowed |
+|--------|---------|
+| Dashboard session, `role=admin` | Yes |
+| Dashboard session, `role=member` | No — `403 Admin role required` |
+| API key (`sk_…`) | No — `403` |
+
 ## Request body
 
 None.
@@ -34,7 +45,7 @@ None.
 
 ```bash
 curl -X POST https://api.tumban.com/api/v2/org/webhook-secret/rotate \
-  -H "Authorization: Bearer sk_xxx"
+  -H "Authorization: Bearer <session-token>"
 ```
 
 ```json
@@ -50,3 +61,26 @@ curl -X POST https://api.tumban.com/api/v2/org/webhook-secret/rotate \
   webhook with the current secret only — old secrets become inactive
   immediately.
 </Warning>
+
+## Using the dashboard
+
+<Steps>
+  <Step title="Open Webhooks">
+    From the sidebar, click **Webhooks**.
+  </Step>
+  <Step title="Rotate the secret">
+    In the **Webhook Secret** tile, click **Rotate Secret**. The
+    description on the tile explains: *"Used to verify incoming
+    webhook payloads. Rotating immediately invalidates the old secret
+    — update your server before rotating."*
+  </Step>
+  <Step title="Copy the new secret">
+    The new secret appears once with the prompt *"New secret — copy
+    it now. It won't be shown again."* Click **Copy** and store it in
+    your secret manager.
+  </Step>
+</Steps>
+
+<Note>
+  Non-admins do not see the **Rotate Secret** control.
+</Note>

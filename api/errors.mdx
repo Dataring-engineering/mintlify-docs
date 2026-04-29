@@ -19,7 +19,7 @@ field-level reasons.
 | `204` | Request succeeded; no body (Revoke API key). |
 | `400` | Request was syntactically valid but had no recognized fields, or contained an invalid filter value. |
 | `401` | Missing or malformed `Authorization` header, or the credential is invalid or revoked. |
-| `403` | Token decoded but lacks the required organization context, **or** API-key auth was used on an endpoint that requires a dashboard session (currently [Revoke API key](/api/keys/revoke)). |
+| `403` | Token decoded but lacks the required organization context, **or** the role is insufficient (some endpoints are admin-only), **or** API-key auth was used on an endpoint that requires a dashboard session. |
 | `404` | The resource referenced by the path does not exist within your organization. |
 | `422` | Body failed schema validation — see the per-field detail. |
 | `5xx` | Tumban server error. Retry with backoff. |
@@ -56,6 +56,9 @@ Validation errors (`422`) — `detail` is a list:
 | 401 | `Invalid or revoked API key` | The `sk_…` token is unknown or revoked. |
 | 403 | `Token missing org_id — make sure you have an active organization selected` | Dashboard session has no active org. |
 | 403 | `API key management requires a dashboard session. API keys cannot revoke API keys.` | [Revoke API key](/api/keys/revoke) when called with `sk_…` auth. |
+| 403 | `Admin role required` | [Update org settings](/api/org/update-settings), [Rotate webhook secret](/api/webhook-secret/rotate) when the caller is a non-admin. |
+| 403 | `This endpoint requires an admin dashboard session. API keys cannot access admin endpoints.` | [Update org settings](/api/org/update-settings), [Rotate webhook secret](/api/webhook-secret/rotate) when called with `sk_…` auth. |
+| 422 | `Invalid callback URL: <reason>` | [Update org settings](/api/org/update-settings) when `default_callback_url` resolves to a private/internal address. |
 | 404 | `Scan not found` | [Get scan](/api/scans/get). |
 | 404 | `Batch not found` | [Get batch](/api/scans/batch-get). |
 | 404 | `Org settings not found` | Org settings or usage endpoints. |

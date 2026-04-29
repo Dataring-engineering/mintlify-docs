@@ -37,6 +37,16 @@ no [`default_callback_url`](/api/org/update-settings) set, Tumban runs
 the scan to completion but sends no webhook. Read the result by
 polling [`GET /api/v2/scans/{scan_id}`](/api/scans/get) instead.
 
+## API-key revocation during a scan
+
+If the API key that authenticated the scan is revoked **after**
+submission but before the webhook fires, Tumban skips delivery of
+that webhook. The scan still completes server-side and the result
+remains readable via [`GET /api/v2/scans/{scan_id}`](/api/scans/get)
+to credentials still authorized for the organization. This protects
+the up-to-450-second window between scan submission and webhook
+delivery from a leaked-then-revoked key.
+
 ## Idempotency
 
 Each delivery attempt sends the same body, including the same

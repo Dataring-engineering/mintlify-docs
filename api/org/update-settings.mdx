@@ -13,12 +13,27 @@ include in the body are changed.
 PATCH /api/v2/org/settings
 ```
 
+## Permissions
+
+Updating settings requires an admin role on a dashboard session.
+Members and API-key auth are rejected with `403`.
+
+| Caller | Allowed |
+|--------|---------|
+| Dashboard session, `role=admin` | Yes |
+| Dashboard session, `role=member` | No — `403 Admin role required` |
+| API key (`sk_…`) | No — `403` |
+
 ## Request body
 
 <ParamField body="default_callback_url" type="string">
   HTTPS URL Tumban will use when a scan is submitted without an
   explicit `callback_url`. Setting it once removes the need to send
   `callback_url` on every request.
+
+  The URL must resolve to a public address. URLs that resolve to
+  private or internal address ranges (RFC1918, loopback, link-local,
+  multicast, CGNAT) are rejected with `422` to defend against SSRF.
 </ParamField>
 
 ## Response
@@ -30,7 +45,7 @@ Returns the updated org settings document. See
 
 ```bash
 curl -X PATCH https://api.tumban.com/api/v2/org/settings \
-  -H "Authorization: Bearer sk_xxx" \
+  -H "Authorization: Bearer <session-token>" \
   -H "Content-Type: application/json" \
   -d '{"default_callback_url": "https://your-app.example/webhooks/tumban"}'
 ```
@@ -51,4 +66,28 @@ curl -X PATCH https://api.tumban.com/api/v2/org/settings \
 | Status | Detail |
 |--------|--------|
 | 400 | `No fields to update` — the request body contained no recognized fields. |
+| 403 | `Admin role required`, or `This endpoint requires an admin dashboard session. API keys cannot access admin endpoints.` |
 | 404 | `Org settings not found`. |
+| 422 | `Invalid callback URL: <reason>` — `default_callback_url` resolves to a private/internal address. |
+
+## Using the dashboard
+
+<Steps>
+  <Step title="Open Webhooks">
+    From the sidebar, click **Webhooks**.
+  </Step>
+  <Step title="Set the default callback URL">
+    In the **Default Callback URL** tile, enter your webhook URL in
+    the **URL** field (placeholder `https://your-server.com/webhook`)
+    and click **Save**.
+
+    Tumban rejects URLs that target private or internal addresses.
+    The dashboard surfaces the error inline before submitting:
+    *"This URL targets a private/internal address. Webhooks must use
+    a public URL."* The server's check is authoritative.
+  </Step>
+</Steps>
+
+<Note>
+  Non-admins do not see the **Default Callback URL** controls.
+</Note>

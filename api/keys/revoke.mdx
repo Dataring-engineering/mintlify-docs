@@ -54,3 +54,25 @@ curl -X DELETE https://api.tumban.com/api/v2/org/api-keys/key_a1b2c3d4e5f6a7b8 \
 |--------|--------|
 | 403 | `API key management requires a dashboard session. API keys cannot revoke API keys.` |
 | 404 | `API key not found or already revoked` (also returned to a member targeting another user's key). |
+
+## Using the dashboard
+
+<Steps>
+  <Step title="Open API Keys">
+    From the sidebar, click **API Keys**.
+  </Step>
+  <Step title="Click the trash icon">
+    In the **Active Keys** table, click the trash icon (tooltip:
+    *"Revoke key"*) on the row of the key you want to revoke. The row
+    disappears immediately on success — there is no confirmation
+    dialog.
+  </Step>
+</Steps>
+
+<Note>
+  The dashboard currently shows the trash icon on every key row,
+  regardless of whether the signed-in member created the key.
+  Server-side permission checks still apply: a member who tries to
+  revoke another user's key will receive a `404` from the API and the
+  row will not be removed.
+</Note>

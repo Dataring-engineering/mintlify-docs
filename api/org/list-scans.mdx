@@ -13,6 +13,11 @@ populating dashboards and review queues.
 GET /api/v2/org/scans
 ```
 
+<Note>
+  Visibility is org-wide by design — every member of the organization
+  sees every scan, not just the ones they submitted themselves.
+</Note>
+
 ## Query parameters
 
 <ParamField query="limit" type="integer" default="10">
@@ -104,3 +109,15 @@ curl "https://api.tumban.com/api/v2/org/scans?limit=5&recommendation=review_high
 | Status | Detail |
 |--------|--------|
 | 400 | `Invalid recommendation values: [...]` — one or more values in `recommendation` are not allowed. |
+
+## Using the dashboard
+
+The **Home** page renders two tables that read from this endpoint:
+
+- **Needs your attention** — scans from the last 30 days with
+  `recommendation` of `review_high` or `review_medium`.
+- **Recent scans** — the eight most recent scans of any status.
+
+The page polls in-flight (`processing`) scans every five seconds and
+updates rows in place. Click any non-processing row to open
+[Get scan](/api/scans/get) detail.

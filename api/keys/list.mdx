@@ -6,12 +6,22 @@ icon: "list"
 
 {/* sources: src/api/routes_auth.py:list_keys, src/db/mongodb.py:list_api_keys */}
 
-List the organization's active (non-revoked) API keys. Key hashes and
-raw values are never returned.
+List the organization's API keys. Key hashes and raw values are never
+returned.
+
+By default the response includes only active (non-revoked) keys. Pass
+`?include_revoked=true` to also receive revoked keys with their audit
+trail (`revoked_at`, `revoked_by`).
 
 ```http
 GET /api/v2/org/api-keys
 ```
+
+## Query parameters
+
+<ParamField query="include_revoked" type="boolean" default="false">
+  When `true`, the response also includes revoked keys.
+</ParamField>
 
 ## Response
 
@@ -35,7 +45,8 @@ GET /api/v2/org/api-keys
 </ResponseField>
 
 <ResponseField name="revoked" type="boolean" required>
-  Always `false` here — this endpoint omits revoked keys.
+  `false` for active keys. Only `true` when `include_revoked=true` is
+  set on the request.
 </ResponseField>
 
 <ResponseField name="created_at" type="string" required>
@@ -52,7 +63,19 @@ GET /api/v2/org/api-keys
   the API.
 </ResponseField>
 
-## Example
+<ResponseField name="revoked_at" type="string">
+  Present on revoked keys (when `include_revoked=true`). ISO 8601 UTC
+  timestamp of revocation.
+</ResponseField>
+
+<ResponseField name="revoked_by" type="string">
+  Present on revoked keys (when `include_revoked=true`). User id of
+  whoever revoked the key.
+</ResponseField>
+
+## Examples
+
+### Active keys only (default)
 
 ```bash
 curl https://api.tumban.com/api/v2/org/api-keys \
@@ -74,3 +97,45 @@ curl https://api.tumban.com/api/v2/org/api-keys \
   ]
 }
 ```
+
+### Including revoked keys (audit-trail view)
+
+```bash
+curl "https://api.tumban.com/api/v2/org/api-keys?include_revoked=true" \
+  -H "Authorization: Bearer sk_xxx"
+```
+
+```json
+{
+  "api_keys": [
+    {
+      "key_id": "key_a1b2c3d4e5f6a7b8",
+      "org_id": "org_2abc...",
+      "name": "ci-pipeline",
+      "revoked": false,
+      "created_at": "2026-04-29T12:00:00",
+      "last_used_at": "2026-04-29T12:34:56",
+      "created_by": "user_2def..."
+    },
+    {
+      "key_id": "key_old1234567890ab",
+      "org_id": "org_2abc...",
+      "name": "deprecated-laptop",
+      "revoked": true,
+      "created_at": "2026-02-10T09:14:00",
+      "last_used_at": "2026-04-12T17:50:00",
+      "created_by": "user_2def...",
+      "revoked_at": "2026-04-15T08:00:00",
+      "revoked_by": "user_2def..."
+    }
+  ]
+}
+```
+
+## Using the dashboard
+
+Open **API Keys** in the sidebar. The **Active Keys** tile lists every
+non-revoked key for the organization, showing the key id, label, and
+created-at timestamp. The dashboard does not currently surface
+`last_used_at`, `created_by`, or the audit-trail fields — read those
+from this endpoint directly.

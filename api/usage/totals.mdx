@@ -43,3 +43,26 @@ curl https://api.tumban.com/api/v2/org/usage \
 | Status | Detail |
 |--------|--------|
 | 404 | `Org settings not found`. |
+
+## Using the dashboard
+
+The **Usage** page reads from this and the related usage endpoints to
+render:
+
+- Three stat tiles — **Total scans (lifetime)**, **Last 30 days**, and
+  **Today**.
+- A bar chart **Scans over time** with a toggle between
+  **Daily (30d)** and **Monthly (12m)**. Powered by
+  [Get scan timeseries](/api/usage/scans).
+- A donut chart **Priority distribution — last 30 days** broken down
+  by recommendation. Powered by
+  [Get priority distribution](/api/usage/priority).
+
+The captions under each chart show *"Updated X min ago · cache"* or
+*"… · live"*, indicating whether the response came from the
+pre-aggregated cache or a live database query.
+
+<Note>
+  The Usage page in the dashboard is admin-only. The underlying API
+  endpoints are not role-gated — members can call them directly.
+</Note>

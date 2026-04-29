@@ -11,8 +11,10 @@ When a scan reaches a terminal status (`completed`,
 scan's `callback_url` with a JSON body. Headers:
 
 - `Content-Type: application/json`
-- `X-Sherlock-Signature: sha256=<hex>` — when the organization has a
-  webhook secret. See [Signature verification](/webhooks/signatures).
+- `X-Tumban-Signature`, `X-Tumban-Signature-V2`, `X-Tumban-Timestamp`,
+  `X-Tumban-Org-Id` — when the organization has a webhook secret. See
+  [Signature verification](/webhooks/signatures) for the full header
+  reference and verifier snippets.
 
 ## Body
 

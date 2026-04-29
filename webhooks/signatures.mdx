@@ -1,58 +1,148 @@
 ---
 title: "Signature verification"
-description: "Confirm a webhook payload was sent by Tumban."
+description: "Confirm a webhook payload was sent by Tumban, hasn't been tampered with, and is meant for your organization."
 icon: "shield-check"
 ---
 
-{/* sources: src/services/webhook.py, src/api/routes_auth.py:rotate_webhook_secret */}
+{/* sources: src/services/webhook.py:send_webhook, src/api/routes_auth.py:rotate_webhook_secret, docs/API_FIELD_REFERENCE.md */}
 
-When your organization has a webhook secret configured, Tumban signs
-every webhook body with HMAC SHA-256 and sends the digest in the
-`X-Sherlock-Signature` header.
+When your organization has a webhook secret configured, every webhook
+delivery includes four signed headers so your receiver can verify the
+payload came from Tumban, hasn't been tampered with, and is meant for
+your organization.
 
-```http
-X-Sherlock-Signature: sha256=<hex-digest>
-```
+## Headers
 
-The digest is computed over the **raw request body** — verify before
-parsing JSON, since any whitespace or key reordering you apply will
-change the bytes.
+| Header | Meaning |
+|---|---|
+| `X-Tumban-Signature` | `sha256=<hex>` — HMAC-SHA256 over the raw request body. Simplest receiver implementation. |
+| `X-Tumban-Signature-V2` | `sha256=<hex>` — HMAC-SHA256 over `"{timestamp}.{org_id}.{body}"`. **Recommended** — adds replay resistance and tenant binding. |
+| `X-Tumban-Timestamp` | Unix seconds when the payload was signed. |
+| `X-Tumban-Org-Id` | The `org_id` this webhook is for. |
+
+Both signatures use the same secret. The body bytes are the raw request
+body — verify before parsing JSON, since any whitespace or key reordering
+you apply will change the bytes.
 
 ## Setting up
 
-1. Call [Rotate webhook secret](/api/webhook-secret/rotate) to obtain a
-   secret. The value is shown exactly once.
-2. Store the secret in your secret manager.
-3. Verify every incoming webhook against it.
+<Steps>
+  <Step title="Generate a webhook secret">
+    Call [Rotate webhook secret](/api/webhook-secret/rotate) (or use the
+    dashboard — see that page). The value is shown exactly once.
+  </Step>
+  <Step title="Store the secret">
+    Put it in your secret manager. Capture the `org_id` your receiver
+    expects to receive webhooks for at the same time — you'll bind the
+    receiver to it.
+  </Step>
+  <Step title="Verify every incoming webhook">
+    Use the V2 verifier below. It performs all three required checks:
+    constant-time signature compare, replay window, and tenant binding.
+  </Step>
+</Steps>
 
-## Verification
+## What your verifier must do
+
+A correct verifier performs **three checks** in addition to recomputing
+the signature:
+
+1. **Constant-time signature compare.** Do not use `==` on the hex
+   digest. Use `hmac.compare_digest` (Python),
+   `crypto.timingSafeEqual` (Node), or your language's equivalent. A
+   naive `==` leaks timing information that lets an attacker brute-force
+   a valid signature byte by byte.
+2. **Replay protection.** Reject anything whose `X-Tumban-Timestamp` is
+   more than ~5 minutes from now. Captured signed payloads should not
+   be replayable indefinitely.
+3. **Tenant binding.** Verify `X-Tumban-Org-Id` matches the `org_id`
+   your receiver expects. Without this, a webhook signed with org A's
+   secret can be delivered to a receiver that hardcodes one secret and
+   accepts any "from us" payload — a cross-tenant abuse vector.
+
+## Reference verifier (V2 — recommended)
 
 <CodeGroup>
 ```python python
-import hmac
 import hashlib
+import hmac
+import time
 
-def verify(secret: str, body: bytes, header_value: str) -> bool:
-    if not header_value or not header_value.startswith("sha256="):
+WEBHOOK_SECRET   = "..."          # the secret from Rotate webhook secret
+EXPECTED_ORG_ID  = "org_abc123"   # the org_id this receiver belongs to
+TOLERANCE_SECONDS = 300           # 5 minutes
+
+
+def verify_webhook(headers: dict, body: bytes) -> bool:
+    """Return True iff headers + body authenticate as a valid Tumban
+    webhook for EXPECTED_ORG_ID, signed within TOLERANCE_SECONDS.
+    """
+    sig_header = headers.get("X-Tumban-Signature-V2", "")
+    timestamp  = headers.get("X-Tumban-Timestamp", "")
+    org_id     = headers.get("X-Tumban-Org-Id", "")
+
+    if not sig_header.startswith("sha256="):
         return False
-    expected = hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
-    received = header_value.removeprefix("sha256=")
-    return hmac.compare_digest(expected, received)
+    received_sig = sig_header[len("sha256="):]
+
+    # 1. Tenant binding — reject anything not for our org.
+    if org_id != EXPECTED_ORG_ID:
+        return False
+
+    # 2. Replay protection — reject stale or future timestamps.
+    try:
+        sent_at = int(timestamp)
+    except ValueError:
+        return False
+    if abs(int(time.time()) - sent_at) > TOLERANCE_SECONDS:
+        return False
+
+    # 3. Constant-time signature check.
+    signed_payload = f"{timestamp}.{org_id}.".encode() + body
+    expected = hmac.new(WEBHOOK_SECRET.encode(), signed_payload,
+                        hashlib.sha256).hexdigest()
+    return hmac.compare_digest(received_sig, expected)
 ```
 
 ```js node
 import crypto from "node:crypto";
 
-function verify(secret, body, headerValue) {
-  if (!headerValue?.startsWith("sha256=")) return false;
+const WEBHOOK_SECRET    = "...";          // the secret from Rotate webhook secret
+const EXPECTED_ORG_ID   = "org_abc123";   // the org_id this receiver belongs to
+const TOLERANCE_SECONDS = 300;            // 5 minutes
+
+
+export function verifyWebhook(headers, body) {
+  const sigHeader = headers["x-tumban-signature-v2"] || "";
+  const timestamp = headers["x-tumban-timestamp"]    || "";
+  const orgId     = headers["x-tumban-org-id"]       || "";
+
+  if (!sigHeader.startsWith("sha256=")) return false;
+  const receivedSig = sigHeader.slice("sha256=".length);
+
+  // 1. Tenant binding.
+  if (orgId !== EXPECTED_ORG_ID) return false;
+
+  // 2. Replay protection.
+  const sentAt = parseInt(timestamp, 10);
+  if (Number.isNaN(sentAt)) return false;
+  if (Math.abs(Math.floor(Date.now() / 1000) - sentAt) > TOLERANCE_SECONDS) {
+    return false;
+  }
+
+  // 3. Constant-time signature check. `body` must be the raw bytes.
+  const signedPayload = Buffer.concat([
+    Buffer.from(`${timestamp}.${orgId}.`, "utf8"),
+    body,
+  ]);
   const expected = crypto
-    .createHmac("sha256", secret)
-    .update(body)
+    .createHmac("sha256", WEBHOOK_SECRET)
+    .update(signedPayload)
     .digest("hex");
-  const received = headerValue.slice("sha256=".length);
+
   return crypto.timingSafeEqual(
     Buffer.from(expected, "hex"),
-    Buffer.from(received, "hex"),
+    Buffer.from(receivedSig, "hex"),
   );
 }
 ```
@@ -60,18 +150,55 @@ function verify(secret, body, headerValue) {
 ```ruby ruby
 require "openssl"
 
-def verify(secret, body, header_value)
-  return false unless header_value&.start_with?("sha256=")
-  expected = OpenSSL::HMAC.hexdigest("sha256", secret, body)
-  received = header_value.delete_prefix("sha256=")
-  Rack::Utils.secure_compare(expected, received)
+WEBHOOK_SECRET    = "..."          # the secret from Rotate webhook secret
+EXPECTED_ORG_ID   = "org_abc123"   # the org_id this receiver belongs to
+TOLERANCE_SECONDS = 300            # 5 minutes
+
+
+def verify_webhook(headers, body)
+  sig_header = headers["X-Tumban-Signature-V2"].to_s
+  timestamp  = headers["X-Tumban-Timestamp"].to_s
+  org_id     = headers["X-Tumban-Org-Id"].to_s
+
+  return false unless sig_header.start_with?("sha256=")
+  received_sig = sig_header.delete_prefix("sha256=")
+
+  # 1. Tenant binding.
+  return false unless org_id == EXPECTED_ORG_ID
+
+  # 2. Replay protection.
+  sent_at = Integer(timestamp) rescue nil
+  return false if sent_at.nil?
+  return false if (Time.now.to_i - sent_at).abs > TOLERANCE_SECONDS
+
+  # 3. Constant-time signature check.
+  signed_payload = "#{timestamp}.#{org_id}.".b + body
+  expected = OpenSSL::HMAC.hexdigest("sha256", WEBHOOK_SECRET, signed_payload)
+
+  Rack::Utils.secure_compare(expected, received_sig)
 end
 ```
 </CodeGroup>
 
-Always use a constant-time comparison (`hmac.compare_digest`,
-`crypto.timingSafeEqual`, `Rack::Utils.secure_compare`) to avoid
-timing-attack leakage.
+## Choosing between V1 and V2
+
+- **V2 (`X-Tumban-Signature-V2`) is recommended for all new receivers.**
+  It binds the signature to a specific tenant and timestamp, defending
+  against replay and cross-tenant abuse.
+- **V1 (`X-Tumban-Signature`)** is shipped on every delivery for
+  receivers that need the simplest possible HMAC-over-body
+  implementation. It does not bind tenant or timestamp — if you use it,
+  rotate secrets aggressively and never share a secret across orgs.
+
+```python
+# V1-only verifier (for completeness; prefer V2):
+def verify_v1(secret: str, body: bytes, header_value: str) -> bool:
+    if not header_value.startswith("sha256="):
+        return False
+    expected = hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
+    received = header_value[len("sha256="):]
+    return hmac.compare_digest(expected, received)
+```
 
 ## Rotation
 
@@ -80,9 +207,9 @@ incoming webhooks are signed with the new secret only. Update your
 verification code first, then call
 [Rotate webhook secret](/api/webhook-secret/rotate).
 
-## When the header is absent
+## When the headers are absent
 
 If your organization has no webhook secret configured, Tumban does not
-send the `X-Sherlock-Signature` header. Generate one with
+send any of the four signature headers. Generate one with
 [Rotate webhook secret](/api/webhook-secret/rotate) before trusting
 webhook bodies in production.

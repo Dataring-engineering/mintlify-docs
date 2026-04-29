@@ -185,3 +185,20 @@ curl https://api.tumban.com/api/v2/scans/550e8400-e29b-41d4-a716-446655440000 \
 | Status | Detail |
 |--------|--------|
 | 404 | `Scan not found` — the scan id does not exist within your organization. |
+
+## Using the dashboard
+
+Click any non-processing scan row from the **Home** page or the
+**Scan** page to open the scan detail. The page renders these
+read-only sections:
+
+- **Summary** — profile URL, scan id, status, submitted/completed
+  timestamps, webhook delivery timestamp, error.
+- **Triage** — recommendation badge, risk score, confidence, reason
+  codes, reason summary.
+- **Coverage** — which analysis steps ran, login-blocked URLs,
+  referrer match counts.
+- **Strategy scores** — internal per-strategy scores. Useful for
+  debugging an unexpected recommendation.
+- **Raw JSON** — collapsible *"Show full document"* panel that
+  exposes the entire scan record.

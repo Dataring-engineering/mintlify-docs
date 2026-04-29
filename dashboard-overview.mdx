@@ -1,0 +1,62 @@
+---
+title: "Dashboard overview"
+description: "What's where in the Tumban dashboard — sidebar, organization switcher, and which pages back which API endpoints."
+icon: "table-columns"
+---
+
+{/* sources: frontend/user/src/App.tsx, frontend/user/src/pages/* */}
+
+The Tumban dashboard at [platform.tumban.com](https://platform.tumban.com)
+exposes the same operations as the API. Every API page in this
+reference has a **Using the dashboard** section pointing back to the
+corresponding UI flow; this page is the map.
+
+## Layout
+
+The dashboard has three primary regions:
+
+- **Left sidebar** — top-level navigation. Some items are admin-only.
+- **Main area** — the active page.
+- **Sidebar footer** — organization switcher, signed-in user info,
+  sign-out button.
+
+## Sidebar items
+
+| Item | What it covers | API pages |
+|------|----------------|-----------|
+| **Home** | Overview dashboard with **Needs your attention** and **Recent scans** panels, plus stat tiles. | [List org scans](/api/org/list-scans), [Get usage totals](/api/usage/totals) |
+| **Scan** | Submit a single profile URL, view your local submission history (persisted in your browser). | [Create scan](/api/scans/create), [Get scan](/api/scans/get) |
+| **Usage** | Bar chart and donut chart for scan throughput and recommendation distribution. Admin-only in the dashboard. | [Get scan timeseries](/api/usage/scans), [Get priority distribution](/api/usage/priority), [Get usage totals](/api/usage/totals) |
+| **API Keys** | Create, list, and revoke API keys. | [Create API key](/api/keys/create), [List API keys](/api/keys/list), [Revoke API key](/api/keys/revoke) |
+| **Webhooks** | Set the default callback URL and rotate the webhook secret. | [Update org settings](/api/org/update-settings), [Rotate webhook secret](/api/webhook-secret/rotate) |
+| **Organisation** | Manage members and organization profile. Admin-only — hidden for members. | (Not exposed on the API.) |
+
+## Organization switcher
+
+If your account belongs to multiple organizations, the switcher in the
+bottom-left of the sidebar shows the active organization and lets you
+change it. All API requests and dashboard data are scoped to whichever
+organization is active.
+
+## Role-gated UI
+
+Some controls are hidden or display an admin-only notice in the
+dashboard. The role enforcement on the underlying API endpoints is
+documented on each endpoint page.
+
+| Action | Dashboard | API |
+|--------|-----------|-----|
+| Create / list API keys | Members and admins | Members and admins |
+| Revoke API key | Trash icon visible to all members; the API rejects revocations a member is not authorized for | Members revoke their own keys; admins revoke any |
+| Set default callback URL | Hidden for non-admins | Admin-only |
+| Rotate webhook secret | Hidden for non-admins | Admin-only |
+| View Usage page | Members see "Admin only" notice | API itself is not role-gated; members can call directly |
+| View Organisation page | Hidden for non-admins | (Not on the API.) |
+
+## Sign-in
+
+Sign in at [platform.tumban.com](https://platform.tumban.com) with the
+credentials provided when your organization was onboarded. After
+signing in for the first time, your organization is provisioned
+automatically — the API endpoints become reachable as soon as the
+dashboard loads.

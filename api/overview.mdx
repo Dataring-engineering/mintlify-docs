@@ -37,16 +37,18 @@ Errors return a JSON object with a `detail` field:
 { "detail": "Invalid or revoked API key" }
 ```
 
-Validation errors (HTTP 422) return a list of failed fields under
-`detail`:
+Validation errors (HTTP 422) return a list under `detail`. Each entry
+has `loc` (an array of segments locating the offending field), `msg`,
+`type`, and may include `input`, `ctx`, and `url`.
 
 ```json
 {
   "detail": [
     {
-      "field": "profile_url",
+      "loc": ["body", "profile_url"],
       "msg": "Input should be a valid URL",
-      "type": "url_parsing"
+      "type": "url_parsing",
+      "input": "not-a-url"
     }
   ]
 }

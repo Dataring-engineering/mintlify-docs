@@ -73,6 +73,7 @@ Emitted when the judge model adjusted a borderline aggregated score.
 | Code | Meaning |
 |------|---------|
 | `LLM_API_ERROR` | The contextual model failed due to infrastructure (timeout, network, 5xx). Score defaulted to a neutral value. |
+| `LLM_PARSE_ERROR` | The contextual model returned a response that could not be parsed (invalid or truncated JSON). Score defaulted to a neutral value. |
 | `SCAN_FAILED` | The scan as a whole could not produce a triage report. Webhook payload only — see the `error` field. |
 
 <Note>

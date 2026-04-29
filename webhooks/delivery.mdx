@@ -19,9 +19,10 @@ response:
 
 ## Backoff
 
-Exponential delays between retries: `1s, 2s`, capped at `30s`. Tumban
-sleeps before retries 2 and 3 only — there is no sleep after the
-final attempt.
+Tumban waits `1s` after the first failed attempt and `2s` after the
+second. There is no sleep after the third attempt — the request fails
+permanently. Backoff is computed as `min(2^attempt, 30)` so longer
+delays would apply if the retry count were ever increased.
 
 ## What gets delivered after the final retry
 

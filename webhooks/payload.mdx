@@ -71,7 +71,13 @@ scan's `callback_url` with a JSON body. Headers:
 
 <ResponseField name="dossier_url" type="string" required>
   Link to the detailed dossier for this scan.
-  {/* TODO: confirm production dossier URL once the hosted viewer ships — currently returns a relative path */}
+
+  <Warning>
+    Do not depend on this value. The hosted dossier viewer is not yet
+    available; the field currently returns a placeholder path that
+    will change. Fetch [`GET /api/v2/scans/{scan_id}`](/api/scans/get)
+    directly for the canonical scan record.
+  </Warning>
 </ResponseField>
 
 <ResponseField name="coverage" type="object" required>

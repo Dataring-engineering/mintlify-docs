@@ -176,8 +176,12 @@ curl https://api.tumban.com/api/v2/scans/550e8400-e29b-41d4-a716-446655440000 \
 ```
 
 <Note>
-  Additional internal fields may appear in the response. Treat unknown
-  fields as opaque and forward-compatible.
+  The response also includes internal fields not listed above —
+  `canonical_url`, `username`, `platform`, `last_scanned_at`, `bio`,
+  `profile_image_url`, `banner_image_url`, `social_links`,
+  `direct_links`, `blob_references`, `updated_at`, and `org_id`. These
+  reflect the underlying scan record and are subject to change. Do not
+  rely on their names, types, or presence; treat them as opaque.
 </Note>
 
 ## Errors

@@ -65,14 +65,9 @@ include mixed case.
 | `GET`    | `/api/v2/org/api-keys` | List API keys (hashes + metadata) |
 | `DELETE` | `/api/v2/org/api-keys/{key_id}` | Revoke an API key |
 
-### Usage
-
-| Method | Path | Purpose |
-|--------|------|---------|
-| `GET` | `/api/v2/usage/totals` | Lifetime + window totals |
-| `GET` | `/api/v2/usage/scans` | Scan throughput timeseries |
-| `GET` | `/api/v2/usage/priority` | Recommendation distribution |
-| `GET` | `/api/v2/usage/warmer-health` | Cache warmer status |
+Usage / analytics endpoints are **not** part of the public API. The
+dashboard renders usage data internally; there is no supported way to
+read it programmatically.
 
 ## Endpoint details that summarisers commonly get wrong
 

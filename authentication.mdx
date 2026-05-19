@@ -64,6 +64,15 @@ Tumban only stores the SHA-256 hash of an API key. The raw `sk_…` value is
 returned exactly once at creation time. If you lose it, revoke the key and
 create a new one.
 
+## Organization identifier
+
+Every authenticated request resolves to exactly one `org_id`. Tumban
+treats it as an **opaque, case-sensitive string** — do not regex-match
+it against a hex or numeric alphabet. The leading `org_` prefix is the
+only guaranteed part of the shape. Examples (`org_2abc...`) in this
+reference are illustrative; the body is alphanumeric and may include
+mixed case.
+
 ## Errors
 
 | Status | Meaning |

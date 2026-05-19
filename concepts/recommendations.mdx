@@ -4,8 +4,6 @@ description: "How a 0–100 risk score maps to one of four recommendation tiers.
 icon: "gauge"
 ---
 
-{/* sources: src/services/aggregator.py, src/models/profile.py, docs/API_FIELD_REFERENCE.md */}
-
 Every completed scan returns a `recommendation` and a `risk_score` (0–100).
 The recommendation is derived from the score:
 
@@ -19,35 +17,26 @@ The recommendation is derived from the score:
 See [Recommendation values](/reference/recommendation) for the canonical
 reference.
 
-## How the score is produced
+## What the score means
 
-Tumban runs three independent detection strategies in parallel and takes
-the maximum of their scores. A judge model is invoked on borderline
-aggregated scores (11–70) and may bump the score up or down based on
-contextual analysis:
+`risk_score` reflects Tumban's **confidence that a policy violation is
+present**, not uncertainty. A score of `0` means nothing in the profile
+or its external footprint triggered a signal; `100` means the evidence
+is overwhelming. Missing or unreachable data does not push the score
+up — partial coverage is recorded transparently in the
+[`coverage`](/concepts/coverage) object, never as inflated risk.
 
-- **`bump_up`** — the judge promotes a borderline score to at least
-  `51` (i.e. into the `review_medium` band). If the original score was
-  already higher, it is left unchanged.
-- **`bump_down`** — the judge demotes the score to the contextual
-  model's own score, falling back to `20` when the contextual model
-  reported nothing. This is how the judge de-escalates likely false
-  positives (e.g. a brand mention misread as a creator profile).
-- **`keep_score`** — the aggregated score is used as-is.
-
-When a `bump_up` or `bump_down` fires, the resulting `risk_score` may
-not map back to any single strategy's score — `strategy_scores` will
-still show the raw per-strategy values. Use `judge_model_invoked: true`
-to detect that adjudication happened.
-
-The score reflects **confidence that a violation exists**, not
-uncertainty. Missing data does not raise the score.
+The exact internals that produce the score are not part of the public
+contract and may change without notice. Build against the published
+fields — `risk_score`, `recommendation`, `confidence`,
+`reason_codes`, `reason_summary`, `review_targets`, `evidence_index`,
+and `coverage` — and treat any other field on the response as opaque.
 
 ## What `no_flags` does and doesn't mean
 
 `no_flags` means Tumban's automated analysis did not detect a violation.
-It does **not** prove a profile is clean — your manual review process may
-still catch something the pipeline missed.
+It does **not** prove a profile is clean — your manual review process
+may still catch something automation missed.
 
 ## Integration tips
 

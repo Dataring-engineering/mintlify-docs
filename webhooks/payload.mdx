@@ -82,9 +82,9 @@ scan's `callback_url` with a JSON body. Headers:
 </ResponseField>
 
 <ResponseField name="evidence_index" type="object[]">
-  Per-URL evidence the contextual model cited. May be `[]` when only
-  deterministic strategies fired or the contextual model hit an
-  infrastructure error. See [Evidence index](/concepts/evidence-index).
+  Per-URL evidence Tumban cited in support of the decision. May be `[]`
+  when Tumban reached its decision without a per-URL citation to
+  surface. See [Evidence index](/concepts/evidence-index).
 </ResponseField>
 
 <ResponseField name="error" type="string">

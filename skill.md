@@ -154,25 +154,26 @@ POST /api/v2/scan
   integration is forward-compatible, but don't gate partial-handling
   logic on receiving it.
 
-## Confidence triggers (exact)
+## Confidence semantics
 
-`confidence` ∈ `{high, medium, low}`. The triggers are:
+`confidence` ∈ `{high, medium, low}`:
 
-- **`high`** — blocklist strategy score `≥ 85`; **or** two or more
-  strategies returned a non-zero score; **or** aggregated score is `0`
-  (the `no_flags` fast-path always returns `high`).
-- **`medium`** — aggregated score `≥ 60` from a single non-zero
-  strategy; **or** the contextual model itself reported
-  `confidence: "high"`.
-- **`low`** — the judge model was invoked and reported `low`; **or** a
-  single strategy fired with a score `> 0` but none of the higher
-  triggers matched.
+- **`high`** — strong, corroborated evidence. Act on it directly.
+- **`medium`** — solid signal, less corroboration. Useful, but a
+  manual reviewer may want to spot-check on edge cases.
+- **`low`** — a thin or borderline lead. Treat as review-worthy, not
+  as a verdict.
 
 `confidence` is **never `low` when `recommendation` is `no_flags`** —
-the score-`0` fast-path always returns `high`. Do not gate review work
-on that combination; it cannot occur.
+clean profiles always come back with `high` confidence in the
+`no_flags` decision. This combination cannot occur.
 
-## Score → recommendation bands (frozen)
+How Tumban arrives at each level is **not part of the public contract**
+and may change without notice. Build against `confidence`,
+`risk_score`, `recommendation`, `reason_codes`, and `evidence_index`;
+ignore any other field on the response.
+
+## Score → recommendation bands
 
 | Range | Recommendation |
 |-------|----------------|
@@ -181,8 +182,15 @@ on that combination; it cannot occur.
 | 41–60 | `review_medium` |
 | 61–100 | `review_high` |
 
-These four enum values are frozen API contract. Score thresholds may
-move; the enum strings will not.
+`risk_score` reflects confidence that a policy violation is present
+(not uncertainty); missing or unreachable data does not push the score
+up — partial coverage surfaces in the `coverage` object, never as
+inflated risk.
+
+The four enum values above are **frozen API contract**. The score
+thresholds may be tuned over time as detection improves; the enum
+strings will not change. How the score is produced internally is not
+part of the contract.
 
 ## Rate limits
 

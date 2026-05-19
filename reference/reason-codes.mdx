@@ -4,8 +4,6 @@ description: "Machine-readable codes that explain a recommendation."
 icon: "tags"
 ---
 
-{/* sources: src/services/aggregator.py:_aggregate_reason_codes, src/services/strategies/llm_decision.py, docs/API_FIELD_REFERENCE.md */}
-
 `reason_codes` is a list of short identifiers explaining why a scan
 received its recommendation. Codes can be combined; treat the list as
 an unordered set.
@@ -31,7 +29,7 @@ Emitted when matching keywords or domains are found.
 
 ## Pattern codes
 
-Emitted when contextual analysis identifies a violation pattern.
+Emitted when Tumban's analysis identifies a violation pattern.
 
 | Code | Meaning |
 |------|---------|
@@ -44,36 +42,36 @@ Emitted when contextual analysis identifies a violation pattern.
 | Code | Meaning |
 |------|---------|
 | `EXCULPATORY_CONTEXT` | Prohibited keywords appear, but in journalism, education, advocacy, or past-tense framing. The score is suppressed. |
-| `CLEAN_PROFILE` | Contextual analysis explicitly cleared the profile. |
+| `CLEAN_PROFILE` | Tumban's analysis explicitly cleared the profile. |
 
-## Content Safety codes
+## Content safety codes
 
-Emitted when the content classifier flagged a body of text or an image.
+Emitted when Tumban's content classification flagged text or an image.
 
 | Code | Meaning |
 |------|---------|
-| `CONTENT_SAFETY_TEXT_FLAGGED` | Profile text triggered the content classifier. |
-| `CONTENT_SAFETY_IMAGE_FLAGGED` | Profile or banner image triggered the content classifier. |
-| `CONTENT_FILTER_TRIGGERED` | The contextual model's content filter blocked analysis. |
-| `VIOLENCE_CONTENT` | Content classifier flagged violence. |
-| `HATE_CONTENT` | Content classifier flagged hate speech. |
-| `SELF_HARM_CONTENT` | Content classifier flagged self-harm content. |
+| `CONTENT_SAFETY_TEXT_FLAGGED` | Profile text was flagged by the safety classifier. |
+| `CONTENT_SAFETY_IMAGE_FLAGGED` | Profile or banner image was flagged by the safety classifier. |
+| `CONTENT_FILTER_TRIGGERED` | A content filter blocked further analysis. |
+| `VIOLENCE_CONTENT` | Violence flagged by the safety classifier. |
+| `HATE_CONTENT` | Hate speech flagged by the safety classifier. |
+| `SELF_HARM_CONTENT` | Self-harm content flagged by the safety classifier. |
 
 ## Adjudication codes
 
-Emitted when the judge model adjusted a borderline aggregated score.
+Emitted when Tumban adjusted a borderline score after additional review.
 
 | Code | Meaning |
 |------|---------|
-| `JUDGE_BUMP_UP` | Judge raised the score after seeing additional context. |
-| `JUDGE_BUMP_DOWN` | Judge lowered the score after concluding the underlying signal was a false positive. |
+| `JUDGE_BUMP_UP` | Tumban raised the score after additional review found supporting context. |
+| `JUDGE_BUMP_DOWN` | Tumban lowered the score after additional review concluded the underlying signal was a false positive. |
 
 ## Failure codes
 
 | Code | Meaning |
 |------|---------|
-| `LLM_API_ERROR` | The contextual model failed due to infrastructure (timeout, network, 5xx). Score defaulted to a neutral value. |
-| `LLM_PARSE_ERROR` | The contextual model returned a response that could not be parsed (invalid or truncated JSON). Score defaulted to a neutral value. |
+| `LLM_API_ERROR` | A downstream analysis call failed due to infrastructure (timeout, network, 5xx). Tumban substituted a neutral score. |
+| `LLM_PARSE_ERROR` | A downstream analysis call returned a response that could not be parsed. Tumban substituted a neutral score. |
 | `SCAN_FAILED` | The scan as a whole could not produce a triage report. Webhook payload only — see the `error` field. |
 
 <Note>

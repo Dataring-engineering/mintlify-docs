@@ -52,13 +52,18 @@ honestly.
 
 ## When you'll see partial coverage
 
-If `status` is `completed_with_partial`, at least one step in the
-pipeline failed but the scan still produced a usable triage report.
-Common causes:
+A scan that experienced one or more step failures (slow page, login
+wall, transient model error) today comes back with `status: "completed"`
+and the partial-coverage details recorded inside the `coverage` object
+itself — `social_links_checked` may be lower than expected, individual
+URLs may show up under `blocked_by_login`, and so on. Inspect `coverage`
+before drawing conclusions about edges; the `recommendation` and
+`risk_score` are still meaningful, but they were produced from a
+narrower input set.
 
-- A scraper timed out on a slow page.
-- A linked URL required login and could not be analyzed.
-- A model call hit a transient infrastructure error.
-
-The recommendation and score remain meaningful; check `coverage` for
-which inputs were missing before drawing conclusions about edge cases.
+The `completed_with_partial` status is **reserved** for a future
+partial-completion path and is not currently emitted (see
+[Status values](/reference/status)). Keep it in your switch/match so
+your integration remains forward-compatible, but do not gate
+partial-handling logic on receiving it today — read from `coverage`
+instead.

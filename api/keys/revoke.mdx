@@ -13,6 +13,13 @@ subsequent request and cannot be reactivated.
 DELETE /api/v2/org/api-keys/{key_id}
 ```
 
+<Note>
+  This endpoint uses the HTTP **`DELETE`** method on the bare key
+  resource. There is **no** `POST /api/v2/org/api-keys/{key_id}/revoke`
+  variant — that path will return `404`. The canonical path is exactly
+  `DELETE /api/v2/org/api-keys/{key_id}`.
+</Note>
+
 ## Path parameters
 
 <ParamField path="key_id" type="string" required>
@@ -26,16 +33,16 @@ DELETE /api/v2/org/api-keys/{key_id}
 
 ## Permissions
 
-Revoking an API key requires a dashboard session — API-key auth
-(`Authorization: Bearer sk_…`) is not accepted on this endpoint. This
-prevents a leaked API key from being used to revoke every other key in
-the organization.
+Revoke is **not admin-only**. Both admins and members can call it from
+a dashboard session, but with different scope. API-key auth is rejected
+in every case — this prevents a leaked API key from being used to
+revoke every other key in the organization.
 
-| Caller | Scope |
-|--------|-------|
-| Dashboard session, `role=admin` | May revoke any key in the organization. |
-| Dashboard session, `role=member` | May revoke **only keys they created themselves**. |
-| API key (`sk_…`) | Rejected with `403`. |
+| Caller | Allowed to revoke |
+|--------|-------------------|
+| Dashboard session, `role=admin` | Any key in the organization. |
+| Dashboard session, `role=member` | Only keys the member created themselves. |
+| API key (`sk_…`) | None — always `403`. |
 
 When a member targets a key they did not create, Tumban responds `404`
 — the same status as a missing key — so the endpoint cannot be used to

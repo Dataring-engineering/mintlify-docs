@@ -54,5 +54,7 @@ still catch something the pipeline missed.
 - Sort review queues by `risk_score` descending to triage fastest.
 - Watch for `confidence: "low"` ([more](/concepts/confidence)) — those
   decisions warrant a second look regardless of recommendation tier.
-- Treat `completed_with_partial` results as actionable but inspect the
-  [`coverage`](/concepts/coverage) object first.
+- Always check the [`coverage`](/concepts/coverage) object before
+  acting on a result — partial pipelines surface there, not as a
+  distinct status (`completed_with_partial` is currently
+  [reserved](/reference/status)).

@@ -35,8 +35,9 @@ GET /api/v2/batches/{batch_id}
 </ResponseField>
 
 <ResponseField name="completed" type="integer" required>
-  Count of profiles whose scans completed successfully (including
-  `completed_with_partial`).
+  Count of profiles whose scans completed successfully. The reserved
+  `completed_with_partial` status is rolled into this count when it
+  starts firing — see [Status values](/reference/status).
 </ResponseField>
 
 <ResponseField name="failed" type="integer" required>

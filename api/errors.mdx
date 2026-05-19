@@ -4,7 +4,7 @@ description: "HTTP status codes returned by the Tumban API."
 icon: "circle-exclamation"
 ---
 
-{/* sources: src/api/routes_v2.py, src/api/routes_auth.py, src/auth/clerk.py, src/main.py */}
+{/* sources: src/api/routes_v2.py, src/api/routes_auth.py, src/auth, src/main.py */}
 
 The Tumban API uses standard HTTP status codes. Failures return a
 JSON body with a `detail` field; validation errors include a list of
@@ -22,6 +22,7 @@ field-level reasons.
 | `403` | Token decoded but lacks the required organization context, **or** the role is insufficient (some endpoints are admin-only), **or** API-key auth was used on an endpoint that requires a dashboard session. |
 | `404` | The resource referenced by the path does not exist within your organization. |
 | `422` | Body failed schema validation — see the per-field detail. |
+| `429` | The organization's daily scan limit has been reached. The response `detail` is a structured object — see [Rate limits](#rate-limits) below. |
 | `5xx` | Tumban server error. Retry with backoff. |
 
 ## Error envelope
@@ -71,3 +72,34 @@ Use `loc` to locate the field — the last segment is the field name.
 | 404 | `API key not found or already revoked` | [Revoke API key](/api/keys/revoke). |
 | 400 | `No fields to update` | [Update org settings](/api/org/update-settings). |
 | 400 | `Invalid recommendation values: [...]` | [List org scans](/api/org/list-scans). |
+| 429 | Structured object — see [Rate limits](#rate-limits). | [Create scan](/api/scans/create), [Create batch](/api/scans/batch) when the org's `daily_scan_limit` is exhausted. |
+
+## Rate limits
+
+When the organization's `daily_scan_limit` is exceeded, scan-submission
+endpoints return `429` with a JSON object (not a string) under `detail`:
+
+```json
+{
+  "detail": {
+    "error": "daily_scan_limit_exceeded",
+    "limit": 1000,
+    "used": 1000
+  }
+}
+```
+
+- `error` — always `daily_scan_limit_exceeded` for this case.
+- `limit` — the org's configured cap.
+- `used` — scans counted against the cap so far today (UTC day, rolls
+  over at `00:00 UTC`).
+
+[Create batch](/api/scans/batch) has a partial-acceptance path: if the
+batch is larger than the remaining budget, the request succeeds with the
+first N profiles accepted and the response sets `daily_limit_truncated`
+and `profiles_skipped`. Only a fully-rejected batch (zero capacity
+remaining) returns `429`.
+
+Tumban does **not** return `X-RateLimit-*` headers or accept an
+`Idempotency-Key` header. Plan retries around the `429` body shape
+above.

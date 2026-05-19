@@ -66,18 +66,7 @@ scan's `callback_url` with a JSON body. Headers:
 
 <ResponseField name="link_chain" type="string" required>
   Short label describing the path Tumban followed (e.g.
-  `Profile → External site`). Empty string on a failed scan.
-</ResponseField>
-
-<ResponseField name="dossier_url" type="string" required>
-  Link to the detailed dossier for this scan.
-
-  <Warning>
-    Do not depend on this value. The hosted dossier viewer is not yet
-    available; the field currently returns a placeholder path that
-    will change. Fetch [`GET /api/v2/scans/{scan_id}`](/api/scans/get)
-    directly for the canonical scan record.
-  </Warning>
+  `Profile -> External site`). Empty string on a failed scan.
 </ResponseField>
 
 <ResponseField name="coverage" type="object" required>
@@ -86,6 +75,8 @@ scan's `callback_url` with a JSON body. Headers:
 
 <ResponseField name="metadata" type="object" required>
   The metadata you submitted with the scan, echoed back unchanged.
+  Always present: defaults to `{}` when the scan was submitted without a
+  `metadata` body field.
 </ResponseField>
 
 <ResponseField name="evidence_index" type="object[]">
@@ -111,15 +102,14 @@ scan's `callback_url` with a JSON body. Headers:
   "scan_id": "550e8400-e29b-41d4-a716-446655440000",
   "profile_url": "https://creator.example/username",
   "status": "completed",
-  "completed_at": "2026-04-29T12:01:38",
+  "completed_at": "2026-04-29T12:01:38.987654+00:00",
   "recommendation": "review_high",
   "risk_score": 85,
   "confidence": "high",
   "reason_codes": ["PROHIBITED_DOMAIN", "ADULT_KEYWORDS"],
   "reason_summary": "Direct link to a prohibited platform combined with adult keywords in bio.",
   "review_targets": ["https://prohibited-platform.example/username"],
-  "link_chain": "Profile → External site",
-  "dossier_url": "https://api.tumban.com/scans/550e8400-e29b-41d4-a716-446655440000",
+  "link_chain": "Profile -> External site",
   "coverage": {
     "profile_scraped": true,
     "external_search_completed": true,
@@ -148,7 +138,7 @@ scan's `callback_url` with a JSON body. Headers:
   "scan_id": "550e8400-e29b-41d4-a716-446655440000",
   "profile_url": "https://creator.example/username",
   "status": "failed",
-  "completed_at": "2026-04-29T12:01:38",
+  "completed_at": "2026-04-29T12:01:38.987654+00:00",
   "recommendation": "review_high",
   "risk_score": 50,
   "confidence": "low",
@@ -156,7 +146,6 @@ scan's `callback_url` with a JSON body. Headers:
   "reason_summary": "timeout_exceeded_450s",
   "review_targets": ["manual_investigation_required"],
   "link_chain": "",
-  "dossier_url": "https://api.tumban.com/scans/550e8400-e29b-41d4-a716-446655440000",
   "coverage": {
     "profile_scraped": false,
     "external_search_completed": false,

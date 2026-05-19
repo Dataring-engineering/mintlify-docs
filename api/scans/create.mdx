@@ -102,10 +102,17 @@ const res = await fetch("https://api.tumban.com/api/v2/scan", {
 {
   "scan_id": "550e8400-e29b-41d4-a716-446655440000",
   "status": "processing",
-  "submitted_at": "2026-04-29T12:00:00",
-  "estimated_completion": "2026-04-29T12:02:00"
+  "submitted_at": "2026-04-29T12:00:00.123456+00:00",
+  "estimated_completion": "2026-04-29T12:02:00.123456+00:00"
 }
 ```
+
+## Errors
+
+| Status | Detail |
+|--------|--------|
+| 422 | Body failed schema validation — typically a malformed `profile_url`. See [Errors → validation](/api/errors#error-envelope). |
+| 429 | The org's `daily_scan_limit` has been hit. Body is a structured object: `{"error": "daily_scan_limit_exceeded", "limit": N, "used": N}`. See [Rate limits](/api/errors#rate-limits). |
 
 ## Using the dashboard
 

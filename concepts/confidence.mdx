@@ -17,15 +17,27 @@ values:
 
 ## How it's derived
 
-Tumban determines confidence after aggregation:
+Tumban determines confidence after aggregation. Rules are evaluated **in
+order**; the first matching rule wins:
 
-- Multiple strategies (≥ 2) returning a non-zero score → `high`.
-- A strong deterministic match (blocklist score ≥ 85) → `high`.
-- Aggregated score ≥ 60 from one strategy → `medium`.
-- Borderline case adjudicated by the judge model → judge's own confidence
-  level (`low` or `medium`).
-- Single weak signal (score > 0 but no other corroboration) → `low`.
-- No flags detected → `high` confidence in `no_flags`.
+1. **Strong deterministic match** — blocklist strategy score `≥ 85`
+   → `high`. The blocklist is exact and fast, so a hit is treated as
+   high confidence on its own.
+2. **Multiple strategies agree** — two or more of (blocklist,
+   content safety, contextual model) returned a non-zero score
+   → `high`.
+3. **Single strong strategy** — aggregated score `≥ 60` from a single
+   non-zero strategy → `medium`. One signal pointing this high is
+   meaningful even without corroboration.
+4. **Contextual model is confident** — the contextual model reports
+   its own `confidence` as `high` → `medium`.
+5. **Borderline case adjudicated by the judge** — the judge model was
+   invoked → result inherits the judge's own `confidence_level`
+   (`low` or `medium`).
+6. **Single weak signal** — aggregated score `> 0` with none of the
+   above → `low`.
+7. **No flags detected** — aggregated score is `0` → `high` confidence
+   in `no_flags`.
 
 ## When to use it
 

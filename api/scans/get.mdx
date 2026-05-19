@@ -31,7 +31,10 @@ The response is the scan record. Fields you should rely on:
 </ResponseField>
 
 <ResponseField name="batch_id" type="string" required>
-  The batch id. For single scans this is `single_<scan_id>`.
+  The batch id. Scans submitted via [`POST /api/v2/scan`](/api/scans/create)
+  get a synthetic `single_<scan_id>` batch id for internal bookkeeping;
+  match on the `single_` prefix to distinguish single-scan submissions
+  from batched ones.
 </ResponseField>
 
 <ResponseField name="url" type="string" required>
@@ -109,7 +112,7 @@ The response is the scan record. Fields you should rely on:
 
 <ResponseField name="link_chain" type="string" required>
   Short label describing the path Tumban followed (e.g.
-  `Profile → External site`).
+  `Profile -> External site`).
 </ResponseField>
 
 <ResponseField name="evidence_index" type="object[]">
@@ -147,12 +150,12 @@ curl https://api.tumban.com/api/v2/scans/550e8400-e29b-41d4-a716-446655440000 \
   "batch_id": "single_550e8400-e29b-41d4-a716-446655440000",
   "url": "https://creator.example/username",
   "status": "completed",
-  "created_at": "2026-04-29T12:00:00",
-  "processing_started_at": "2026-04-29T12:00:01",
-  "processing_completed_at": "2026-04-29T12:01:38",
+  "created_at": "2026-04-29T12:00:00.123456+00:00",
+  "processing_started_at": "2026-04-29T12:00:01.234567+00:00",
+  "processing_completed_at": "2026-04-29T12:01:38.987654+00:00",
   "callback_url": "https://your-app.example/webhooks/tumban",
   "metadata": {"reviewer_id": "rv_42"},
-  "webhook_delivered_at": "2026-04-29T12:01:39",
+  "webhook_delivered_at": "2026-04-29T12:01:39.345678+00:00",
   "triage_report": {
     "recommendation": "review_high",
     "risk_score": 85,
@@ -160,7 +163,7 @@ curl https://api.tumban.com/api/v2/scans/550e8400-e29b-41d4-a716-446655440000 \
     "reason_codes": ["PROHIBITED_DOMAIN", "ADULT_KEYWORDS"],
     "reason_summary": "Direct link to a prohibited platform combined with adult keywords in bio.",
     "review_targets": ["https://prohibited-platform.example/username"],
-    "link_chain": "Profile → External site",
+    "link_chain": "Profile -> External site",
     "strategy_scores": {"blocklist": 50, "content_safety": 0, "llm": 85},
     "judge_model_invoked": false,
     "evidence_index": [

@@ -20,9 +20,20 @@ your organization.
 | `X-Tumban-Timestamp` | Unix seconds when the payload was signed. |
 | `X-Tumban-Org-Id` | The `org_id` this webhook is for. |
 
-Both signatures use the same secret. The body bytes are the raw request
-body — verify before parsing JSON, since any whitespace or key reordering
-you apply will change the bytes.
+Both signatures use the same secret. The signed payload is built from
+**raw bytes**, not a decoded string — the V2 string-to-sign is the UTF-8
+encoding of `"{timestamp}.{org_id}."` concatenated with the request
+body bytes. Verify before parsing JSON, since any whitespace or key
+reordering you apply will change the bytes.
+
+<Note>
+  Under rare error paths Tumban sends `X-Tumban-Org-Id: ""` (empty
+  string) — this happens when the worker that fired the webhook lost
+  its organization context. The V2 verifier above already rejects these
+  payloads because the empty header value will not match
+  `EXPECTED_ORG_ID`. Treat any webhook with an empty `X-Tumban-Org-Id`
+  as suspicious.
+</Note>
 
 ## Setting up
 

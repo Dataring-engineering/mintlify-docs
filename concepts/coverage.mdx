@@ -23,7 +23,10 @@ honestly.
 </ResponseField>
 
 <ResponseField name="social_links_checked" type="integer" required>
-  Number of linked social profiles whose data Tumban fetched.
+  Number of links Tumban traversed during analysis. Counts every URL
+  followed from the profile bio or surfaced via referrer cross-reference
+  — not only social profiles, despite the name. A value of `0` means the
+  profile had no traversable outbound links.
 </ResponseField>
 
 <ResponseField name="blocked_by_login" type="string[]">
@@ -32,8 +35,10 @@ honestly.
 </ResponseField>
 
 <ResponseField name="referrer_domains_received" type="integer">
-  Number of referrer domains read from the profile's analytics, when
-  available.
+  Number of referrer URLs you supplied with the scan via
+  `metadata.additional_urls`. Tumban does **not** read analytics
+  platforms on your behalf — this field counts only what you passed in.
+  When you do not supply `additional_urls`, this is `0`.
 </ResponseField>
 
 <ResponseField name="referrer_domains_after_filter" type="integer">

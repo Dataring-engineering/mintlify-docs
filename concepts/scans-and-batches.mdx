@@ -19,7 +19,7 @@ asynchronously. The scan moves through these statuses:
 |--------|---------|
 | `processing` | The scan is in flight. |
 | `completed` | All analysis steps finished successfully. |
-| `completed_with_partial` | Result is usable, but at least one step failed (timeout, blocked link, etc). Inspect the [`coverage`](/concepts/coverage) object to see what was skipped. |
+| `completed_with_partial` | **Reserved.** Declared in the API contract for future partial-completion paths, but not currently emitted by the pipeline — scans that experience a step failure today are reported as `completed` (with the [`coverage`](/concepts/coverage) object recording what was skipped) or `failed`. Handle this value in your switch statements so your integration is forward-compatible. |
 | `failed` | The scan could not produce a triage report. The `error` field explains why. |
 
 See [Status values](/reference/status) for the canonical reference.

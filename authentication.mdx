@@ -4,7 +4,7 @@ description: "Bearer credentials for the Tumban API — API keys for server use,
 icon: "key"
 ---
 
-{/* sources: src/auth/clerk.py, src/api/routes_auth.py */}
+{/* sources: src/auth, src/api/routes_auth.py */}
 
 All Tumban API requests require an `Authorization: Bearer <token>` header.
 Tumban accepts two token kinds:
@@ -28,14 +28,35 @@ treated as a session token.
 ## What API keys can do
 
 API keys are scoped to your organization and can call every endpoint in
-this reference, with one exception: revoking an API key requires a
-dashboard session. See [Revoke API key](/api/keys/revoke) for the role
-policy.
+this reference **except** the three management endpoints below. These
+require a dashboard session because they mutate authentication or
+organization-wide configuration.
+
+| Endpoint | Required auth |
+|----------|---------------|
+| [`PATCH /org/settings`](/api/org/update-settings) | Dashboard session, **admin role** |
+| [`POST /org/webhook-secret/rotate`](/api/webhook-secret/rotate) | Dashboard session, **admin role** |
+| [`DELETE /org/api-keys/{key_id}`](/api/keys/revoke) | Dashboard session (any role; see [Revoke API key](/api/keys/revoke) for role-aware ownership rules) |
+
+API keys hitting these endpoints get `403`. See [Errors → common detail
+strings](/api/errors#common-detail-strings) for the exact `detail` text
+to match on.
 
 Each request looks up the key by SHA-256 hash, scopes the request to the
 key's organization, and updates the key's `last_used_at` timestamp.
-
 Revoked keys return `401 Invalid or revoked API key`.
+
+## Rotating an API key
+
+Tumban does not expire API keys automatically. To rotate:
+
+1. [Create a new key](/api/keys/create) and deploy it to your servers.
+2. Once traffic has cut over (watch `last_used_at` on the old key via
+   [List API keys](/api/keys/list)), [revoke the old
+   key](/api/keys/revoke).
+
+There is no overlap window beyond the time it takes you to deploy — both
+keys remain valid until the old one is revoked.
 
 ## Storage
 
@@ -48,6 +69,6 @@ create a new one.
 | Status | Meaning |
 |--------|---------|
 | 401 | Missing `Authorization` header, malformed `Bearer` prefix, or invalid/revoked credential. |
-| 403 | Token decodes but the active organization context is missing (session tokens only), **or** API-key auth was used on an endpoint that requires a dashboard session (currently [Revoke API key](/api/keys/revoke)). |
+| 403 | Token decodes but the active organization context is missing (session tokens only), **or** API-key auth was used on one of the three endpoints that require a dashboard session (see table above), **or** the role is insufficient on an admin-only endpoint. |
 
 See [Errors](/api/errors) for the full error envelope.

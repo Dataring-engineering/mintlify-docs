@@ -6,8 +6,9 @@ icon: "code"
 
 {/* sources: src/services/webhook.py:_build_payload, src/models/profile.py:WebhookPayload,Coverage */}
 
-When a scan reaches a terminal status (`completed`,
-`completed_with_partial`, or `failed`), Tumban issues a `POST` to the
+When a scan reaches a terminal status (today: `completed` or
+`failed` — `completed_with_partial` is [reserved](/reference/status)
+for a future partial-completion path), Tumban issues a `POST` to the
 scan's `callback_url` with a JSON body. Headers:
 
 - `Content-Type: application/json`
@@ -27,8 +28,9 @@ scan's `callback_url` with a JSON body. Headers:
 </ResponseField>
 
 <ResponseField name="status" type="string" required>
-  `completed`, `completed_with_partial`, or `failed`. See
-  [Status values](/reference/status).
+  `completed` or `failed` today. `completed_with_partial` is declared
+  in the schema and reserved but not currently emitted. See
+  [Status values](/reference/status) for the full reference.
 </ResponseField>
 
 <ResponseField name="completed_at" type="string" required>
@@ -91,8 +93,9 @@ scan's `callback_url` with a JSON body. Headers:
 </ResponseField>
 
 <ResponseField name="partial_reason" type="string">
-  Present when `status` is `completed_with_partial`. Brief description
-  of what was skipped.
+  Reserved for a future `completed_with_partial` payload — brief
+  description of what was skipped. Not currently emitted; do not depend
+  on its presence.
 </ResponseField>
 
 ## Example — completed

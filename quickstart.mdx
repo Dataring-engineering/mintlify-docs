@@ -95,7 +95,8 @@ You'll need a Tumban account with an active organization.
     - **Wait for the webhook** at your `callback_url` — see
       [Webhook payload](/webhooks/payload).
     - **Poll** `GET /api/v2/scans/{scan_id}` until `status` is one of
-      `completed`, `completed_with_partial`, or `failed`.
+      `completed` or `failed` (`completed_with_partial` is
+      [reserved](/reference/status) and not currently emitted).
 
     The triage report includes `recommendation`, `risk_score`, `confidence`,
     `reason_codes`, and `evidence_index`. See

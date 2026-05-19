@@ -7,13 +7,17 @@ icon: "gauge-simple-high"
 {/* sources: src/services/aggregator.py:_determine_confidence */}
 
 Every triage report includes a `confidence` field with one of three
-values:
+values. Each value is produced by a specific set of triggers:
 
-| Value | Meaning |
-|-------|---------|
-| `high` | Multiple strategies agree, or a strong deterministic signal was found. Also `high` for a clean profile (`no_flags`). |
-| `medium` | Aggregated score is 60+ from a single strategy, or the contextual model returned high confidence. |
-| `low` | Single weak signal, or a borderline case where the judge model could not resolve the ambiguity. |
+| Value | Triggered by (any one) |
+|-------|------------------------|
+| `high` | Blocklist score `≥ 85`; **or** two or more strategies returned a non-zero score; **or** aggregated score is `0` (the `no_flags` fast-path always reports `high`). |
+| `medium` | Aggregated score `≥ 60` from a single non-zero strategy; **or** the contextual model itself reported `confidence: "high"`. |
+| `low` | The judge model was invoked and reported `low`; **or** a single strategy fired with a score `> 0` but none of the higher triggers matched. |
+
+`confidence` is **never `low` when `recommendation` is `no_flags`** —
+the score-`0` fast-path always returns `high`. Don't gate review work
+on `confidence: low` for clean profiles; it can't happen.
 
 ## How it's derived
 
@@ -41,9 +45,6 @@ order**; the first matching rule wins:
 
 ## When to use it
 
-Use `confidence` to weight your review priority within a recommendation
-tier. A `review_high` with `confidence: "high"` is worth processing
-before a `review_high` with `confidence: "low"`.
-
-For `no_flags`, a low confidence value is not produced — Tumban only
-reports clean when nothing fired.
+Use `confidence` to weight review priority within a recommendation tier.
+A `review_high` with `confidence: "high"` is worth processing before a
+`review_high` with `confidence: "low"`.

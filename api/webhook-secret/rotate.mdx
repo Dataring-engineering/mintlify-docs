@@ -14,6 +14,22 @@ expose it via [Get org settings](/api/org/get-settings).
 POST /api/v2/org/webhook-secret/rotate
 ```
 
+<Note>
+  The canonical path is **`/api/v2/org/webhook-secret/rotate`** — the
+  `/org/` segment is required. `POST /api/v2/webhook-secret/rotate`
+  (without `/org/`) does not exist and will return `404`.
+</Note>
+
+## Storage model
+
+Unlike API keys (which Tumban stores only as a SHA-256 hash), the
+webhook secret is retained **in plaintext on the server**. Tumban needs
+the raw value on every webhook delivery to compute the HMAC signature.
+Because the secret is shown to you exactly once at rotation time and
+never reappears in `GET /api/v2/org/settings`, **there is no recovery
+path** — store the value immediately when this endpoint returns it. If
+you lose it, rotate again and update every verifier in lockstep.
+
 ## Permissions
 
 Rotating the webhook secret requires an admin role on a dashboard

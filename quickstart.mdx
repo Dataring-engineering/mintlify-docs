@@ -20,7 +20,13 @@ You'll need a Tumban account with an active organization.
     From the dashboard, generate an API key. The raw key (`sk_…`) is shown
     exactly once — copy it now and store it in your secret manager.
 
-    See [Create API key](/api/keys/create) for the equivalent API call.
+    Keys are 67 characters: the prefix `sk_` followed by 64 hex
+    characters. Size your secret store and any DB columns accordingly;
+    the `sk_xxx` shown in the request snippets below is a placeholder.
+
+    See [Create API key](/api/keys/create) for the equivalent API call,
+    and [Rotating an API key](/authentication#rotating-an-api-key) when
+    you need to retire one without downtime.
   </Step>
 
   <Step title="Submit a scan">
@@ -77,8 +83,8 @@ You'll need a Tumban account with an active organization.
     {
       "scan_id": "550e8400-e29b-41d4-a716-446655440000",
       "status": "processing",
-      "submitted_at": "2026-04-29T12:00:00",
-      "estimated_completion": "2026-04-29T12:02:00"
+      "submitted_at": "2026-04-29T12:00:00.123456+00:00",
+      "estimated_completion": "2026-04-29T12:02:00.123456+00:00"
     }
     ```
   </Step>

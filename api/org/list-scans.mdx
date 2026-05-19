@@ -38,8 +38,7 @@ GET /api/v2/org/scans
 </ResponseField>
 
 <ResponseField name="fetched_at" type="string" required>
-  ISO 8601 UTC timestamp of when the response was generated, with `Z`
-  suffix.
+  ISO 8601 UTC timestamp of when the response was generated.
 </ResponseField>
 
 ### `scans[]`
@@ -93,14 +92,14 @@ curl "https://api.tumban.com/api/v2/org/scans?limit=5&recommendation=review_high
       "scan_id": "550e8400-e29b-41d4-a716-446655440000",
       "profile_url": "https://creator.example/username",
       "status": "completed",
-      "submitted_at": "2026-04-29T12:00:00",
-      "completed_at": "2026-04-29T12:01:38",
+      "submitted_at": "2026-04-29T12:00:00.123456+00:00",
+      "completed_at": "2026-04-29T12:01:38.987654+00:00",
       "recommendation": "review_high",
       "risk_score": 85,
       "confidence": "high"
     }
   ],
-  "fetched_at": "2026-04-29T12:34:56Z"
+  "fetched_at": "2026-04-29T12:34:56.654321+00:00"
 }
 ```
 

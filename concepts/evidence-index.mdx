@@ -24,8 +24,9 @@ Every entry has:
 
 <ResponseField name="ref" type="string">
   When the contextual model cited the entry by reference (`link_3`,
-  `external_mention_2`, …), this field correlates the entry to that
-  reasoning trace.
+  `external_mention_2`, …), this field correlates the entry to the
+  matching token inside `reason_summary` — use it to highlight the
+  cited URL alongside the model's prose.
 </ResponseField>
 
 Type-specific fields:
@@ -36,13 +37,36 @@ Type-specific fields:
     matched via referrer cross-reference.
   </Tab>
   <Tab title="external_mention">
-    Includes `platform_type` (e.g. `adult`, `link_aggregator`) and
-    `risk_level` (`LOW`, `MEDIUM`, or `HIGH`). The URL is a site
+    Includes `platform_type` and `risk_level`. The URL is a site
     elsewhere on the web that mentions the profile.
+
+    `platform_type` is one of:
+
+    - `adult_content_site`
+    - `cam_site`
+    - `piracy_site`
+    - `social_media`
+    - `unknown`
+
+    `risk_level` is `HIGH`, `MEDIUM`, or `LOW` — derived directly from
+    `platform_type` (e.g. `adult_content_site` and `cam_site` are
+    `HIGH`; `unknown` is `MEDIUM`; everything else is `LOW`). Treat it
+    as a convenience field, not an independent signal.
   </Tab>
   <Tab title="direct_link">
     Includes `domain` and `category`. The URL appears directly in the
     profile bio.
+
+    `category` is a human-readable string drawn from a fixed set:
+
+    - `PROHIBITED (P0 Adult Content Platform)`
+    - `PROHIBITED (P1 Gambling Platform)`
+    - `Social Media (Neutral)`
+    - `Link Aggregator (Review Links)`
+    - `Personal/Unknown`
+
+    Match on the leading `PROHIBITED` prefix if you want to lump P0
+    and P1 together.
   </Tab>
   <Tab title="unknown">
     Rare fallback. Includes a derived `domain`. The entry didn't match
@@ -64,14 +88,14 @@ Type-specific fields:
     "ref": "external_mention_1",
     "url": "https://forum.example/posts/12345",
     "type": "external_mention",
-    "platform_type": "adult",
+    "platform_type": "adult_content_site",
     "risk_level": "HIGH"
   },
   {
     "url": "https://aggregator.example/username",
     "type": "direct_link",
     "domain": "aggregator.example",
-    "category": "link_aggregator"
+    "category": "Link Aggregator (Review Links)"
   }
 ]
 ```

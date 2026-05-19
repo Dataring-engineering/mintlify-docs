@@ -13,7 +13,7 @@ of four values:
 |-------|---------|
 | `processing` | The scan is in flight. You'll only see this on poll responses; Tumban does not deliver webhooks while a scan is processing. |
 | `completed` | All analysis steps finished successfully. Use the triage report directly. |
-| `completed_with_partial` | The scan produced a usable triage report but at least one analysis step failed (timeout, blocked link, transient model error). Inspect [`coverage`](/concepts/coverage) before drawing conclusions about edges. |
+| `completed_with_partial` | **Reserved** — declared in the API contract for future partial-completion paths but not currently written by the pipeline. Today, a scan that experienced a step failure is reported as `completed` (with `coverage` recording what was skipped) or `failed`. Keep this value in your `switch`/`match` so your integration is forward-compatible. |
 | `failed` | The scan could not produce a triage report. The `error` field explains why; the webhook defaults `recommendation` to `review_high` so the profile still lands in your review queue. |
 
 These values are stable. New statuses, if any, will be added without

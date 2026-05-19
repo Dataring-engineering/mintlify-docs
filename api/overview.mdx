@@ -67,3 +67,28 @@ polling [`GET /api/v2/scans/{scan_id}`](/api/scans/get).
 
 Every request is scoped to the organization that owns the credential.
 You cannot read or list resources from another organization.
+
+## Rate limits
+
+Tumban enforces a per-organization **daily scan limit** when one is
+configured for your org. Scan-submission endpoints
+([Create scan](/api/scans/create), [Create batch](/api/scans/batch))
+return `429` with a structured `detail` body when the limit is hit:
+
+```json
+{
+  "detail": {
+    "error": "daily_scan_limit_exceeded",
+    "limit": 1000,
+    "used": 1000
+  }
+}
+```
+
+The counter resets at `00:00 UTC`. [Create batch](/api/scans/batch) has
+a partial-acceptance path — see its docs.
+
+Tumban does **not** return `X-RateLimit-*` headers, and it does **not**
+honour an `Idempotency-Key` header. Treat your `scan_id` (or per-profile
+`scan_id`s in a batch) as the natural idempotency key in your own
+handler.

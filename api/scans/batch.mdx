@@ -61,6 +61,21 @@ POST /api/v2/batch
   cap.
 </ResponseField>
 
+<ResponseField name="daily_limit_truncated" type="boolean">
+  Present and `true` only when the batch was partially accepted because
+  the org's `daily_scan_limit` had remaining capacity for fewer profiles
+  than were requested. Absent (or `null`) when every submitted URL was
+  accepted.
+</ResponseField>
+
+<ResponseField name="profiles_skipped" type="integer">
+  Present only when `daily_limit_truncated` is `true`. The number of
+  trailing profile URLs from the request that were **not** queued for
+  scanning. The first `total_profiles` URLs (in submission order) were
+  accepted; the last `profiles_skipped` URLs were dropped. Resubmit the
+  remainder after the daily limit window resets (`00:00 UTC`).
+</ResponseField>
+
 ## Example
 
 <CodeGroup>
@@ -103,8 +118,8 @@ response = httpx.post(
   "batch_id": "9b8a7c6d-1234-5678-9abc-def012345678",
   "status": "processing",
   "total_profiles": 3,
-  "submitted_at": "2026-04-29T12:00:00",
-  "estimated_completion": "2026-04-29T12:06:00"
+  "submitted_at": "2026-04-29T12:00:00.123456+00:00",
+  "estimated_completion": "2026-04-29T12:06:00.123456+00:00"
 }
 ```
 
@@ -114,3 +129,32 @@ response = httpx.post(
   [`GET /api/v2/batches/{batch_id}`](/api/scans/batch-get) for
   aggregate progress.
 </Note>
+
+### Example — partial acceptance
+
+When the org's `daily_scan_limit` has capacity for fewer profiles than
+were requested, the batch is accepted with the leading N profiles only
+and the response sets `daily_limit_truncated` and `profiles_skipped`:
+
+```json
+{
+  "batch_id": "9b8a7c6d-1234-5678-9abc-def012345678",
+  "status": "processing",
+  "total_profiles": 2,
+  "submitted_at": "2026-04-29T12:00:00.123456+00:00",
+  "estimated_completion": "2026-04-29T12:04:00.123456+00:00",
+  "daily_limit_truncated": true,
+  "profiles_skipped": 1
+}
+```
+
+The remaining profile URLs (the last `profiles_skipped` entries from the
+request, in order) were not queued. Resubmit them after the next daily
+window opens at `00:00 UTC`.
+
+## Errors
+
+| Status | Detail |
+|--------|--------|
+| 422 | Body failed schema validation — typically a malformed URL in `profile_urls`. See [Errors → validation](/api/errors#error-envelope). |
+| 429 | The org's `daily_scan_limit` is fully exhausted (no remaining capacity for even one profile). Body is structured: `{"error": "daily_scan_limit_exceeded", "limit": N, "used": N}`. See [Rate limits](/api/errors#rate-limits). A partially-fillable batch returns `200` with `daily_limit_truncated` instead — see above. |

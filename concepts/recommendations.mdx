@@ -24,7 +24,21 @@ reference.
 Tumban runs three independent detection strategies in parallel and takes
 the maximum of their scores. A judge model is invoked on borderline
 aggregated scores (11–70) and may bump the score up or down based on
-contextual analysis.
+contextual analysis:
+
+- **`bump_up`** — the judge promotes a borderline score to at least
+  `51` (i.e. into the `review_medium` band). If the original score was
+  already higher, it is left unchanged.
+- **`bump_down`** — the judge demotes the score to the contextual
+  model's own score, falling back to `20` when the contextual model
+  reported nothing. This is how the judge de-escalates likely false
+  positives (e.g. a brand mention misread as a creator profile).
+- **`keep_score`** — the aggregated score is used as-is.
+
+When a `bump_up` or `bump_down` fires, the resulting `risk_score` may
+not map back to any single strategy's score — `strategy_scores` will
+still show the raw per-strategy values. Use `judge_model_invoked: true`
+to detect that adjudication happened.
 
 The score reflects **confidence that a violation exists**, not
 uncertainty. Missing data does not raise the score.

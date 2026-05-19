@@ -12,7 +12,7 @@ response:
 | Response | Action |
 |----------|--------|
 | `2xx` | Delivered. No further attempts. |
-| `429 Too Many Requests` | Retry. Tumban honours an integer-seconds `Retry-After` header (capped at 60 s). Without one, falls back to exponential backoff. |
+| `429 Too Many Requests` | Retry. Tumban honours a numeric `Retry-After` header — decimal seconds are accepted, e.g. `Retry-After: 2.5`. Negative or non-numeric values are ignored; the HTTP-date form is not parsed. Capped at 60 s. Without a parseable header, falls back to exponential backoff. |
 | Other `4xx` | Not retried. Tumban gives up — fix your endpoint and replay manually if needed. |
 | `5xx` | Retry with exponential backoff. |
 | Connection error or timeout | Retry with exponential backoff. The HTTP timeout per attempt is 30 s. |
@@ -21,8 +21,10 @@ response:
 
 Tumban waits `1s` after the first failed attempt and `2s` after the
 second. There is no sleep after the third attempt — the request fails
-permanently. Backoff is computed as `min(2^attempt, 30)` so longer
-delays would apply if the retry count were ever increased.
+permanently. Total maximum wall-clock time for a failed delivery is
+roughly `3 × 30 s` (timeouts) plus `1 s + 2 s` (backoffs). The 30-second
+cap in the backoff formula `min(2^attempt, 30)` is not reached at the
+current retry count.
 
 ## What gets delivered after the final retry
 

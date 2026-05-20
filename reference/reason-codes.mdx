@@ -6,7 +6,9 @@ icon: "tags"
 
 `reason_codes` is a list of short identifiers explaining why a scan
 received its recommendation. Codes can be combined; treat the list as
-an unordered set.
+an **unordered set** and as **open-ended**. New codes may be added over
+time, so code defensively against unknown codes — never assume the list
+is exhaustive or in a fixed order.
 
 ## Categorical codes
 
@@ -50,28 +52,28 @@ Emitted when Tumban's content classification flagged text or an image.
 
 | Code | Meaning |
 |------|---------|
-| `CONTENT_SAFETY_TEXT_FLAGGED` | Profile text was flagged by the safety classifier. |
-| `CONTENT_SAFETY_IMAGE_FLAGGED` | Profile or banner image was flagged by the safety classifier. |
-| `CONTENT_FILTER_TRIGGERED` | A content filter blocked further analysis. |
+| `TEXT_FLAGGED` | Profile text was flagged by the safety classifier. |
+| `IMAGE_FLAGGED` | Profile or banner image was flagged by the safety classifier. |
+| `UNSAFE_CONTENT_BLOCKED` | Upstream safety guardrails refused to analyze the input — treated as a finding, not an error. |
 | `VIOLENCE_CONTENT` | Violence flagged by the safety classifier. |
 | `HATE_CONTENT` | Hate speech flagged by the safety classifier. |
 | `SELF_HARM_CONTENT` | Self-harm content flagged by the safety classifier. |
 
 ## Adjudication codes
 
-Emitted when Tumban adjusted a borderline score after additional review.
+Emitted when a follow-up review pass evaluated a borderline score.
 
 | Code | Meaning |
 |------|---------|
-| `JUDGE_BUMP_UP` | Tumban raised the score after additional review found supporting context. |
-| `JUDGE_BUMP_DOWN` | Tumban lowered the score after additional review concluded the underlying signal was a false positive. |
+| `SECONDARY_REVIEW_CONFIRMED` | Follow-up review pass agreed with the initial score. |
+| `SECONDARY_REVIEW_DOWNGRADED` | Follow-up review pass downgraded the initial score. |
 
 ## Failure codes
 
 | Code | Meaning |
 |------|---------|
-| `LLM_API_ERROR` | A downstream analysis call failed due to infrastructure (timeout, network, 5xx). Tumban substituted a neutral score. |
-| `LLM_PARSE_ERROR` | A downstream analysis call returned a response that could not be parsed. Tumban substituted a neutral score. |
+| `ANALYSIS_ERROR` | Contextual analysis step failed due to an infrastructure error (timeout, network, upstream 5xx). Scores 10 (neutral). |
+| `PARSE_ERROR` | Contextual analysis returned a malformed response. Conservative fallback score 50. |
 | `SCAN_FAILED` | The scan as a whole could not produce a triage report. Webhook payload only — see the `error` field. |
 
 <Note>

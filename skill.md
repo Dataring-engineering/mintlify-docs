@@ -140,19 +140,16 @@ POST /api/v2/scan
   → result also queryable via GET /api/v2/scans/{scan_id}
 ```
 
-`status` values today:
+`status` values:
 
 - `processing` — in flight.
-- `completed` — terminal; triage report available.
+- `completed` — terminal; triage report available. May reflect a
+  pipeline where some steps were skipped (slow page, login wall,
+  transient model error). The `coverage` object records what actually
+  ran (e.g. `social_links_checked`, `blocked_by_login`). Read
+  `coverage` to detect partial pipelines; do not gate partial-handling
+  logic on the `status` field.
 - `failed` — terminal; `error` field set.
-- `completed_with_partial` — **reserved**, declared in the schema but
-  not currently emitted by the pipeline. Today, scans that experience
-  step failures (slow page, login wall, transient model error) still
-  return as `completed`; the partial-coverage details surface inside
-  the `coverage` object (e.g. `social_links_checked`, `blocked_by_login`).
-  Keep `completed_with_partial` in `switch`/`match` statements so your
-  integration is forward-compatible, but don't gate partial-handling
-  logic on receiving it.
 
 ## Confidence semantics
 
@@ -285,8 +282,9 @@ A correct V2 verifier performs three checks:
 
 ## Gotchas worth surfacing to a user
 
-- **`completed_with_partial` is reserved.** Reading from `coverage` is
-  the only reliable way to detect partial pipelines today.
+- **Partial pipelines surface in `coverage`, not in `status`.** A
+  scan with step failures still reports `status: "completed"` —
+  read the `coverage` object to see what ran.
 - **Webhook secret is plaintext server-side.** Treat any leak as a
   full compromise of webhook authenticity; rotate immediately.
 - **Revoke is `DELETE`, not `POST` + `/revoke`.** And the path has no

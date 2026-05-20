@@ -61,9 +61,8 @@ before drawing conclusions about edges; the `recommendation` and
 `risk_score` are still meaningful, but they were produced from a
 narrower input set.
 
-The `completed_with_partial` status is **reserved** for a future
-partial-completion path and is not currently emitted (see
-[Status values](/reference/status)). Keep it in your switch/match so
-your integration remains forward-compatible, but do not gate
-partial-handling logic on receiving it today — read from `coverage`
-instead.
+Scans that experienced step failures still come back as
+`status: "completed"` — the `coverage` object is the canonical record
+of what ran and what was skipped (see [Status values](/reference/status)).
+Read from `coverage` to detect partial pipelines; do not gate
+partial-handling logic on the `status` field.

@@ -78,9 +78,8 @@ The response is the scan record. Fields you should rely on:
 </ResponseField>
 
 <ResponseField name="triage_report" type="object">
-  Present once `status` reaches a terminal value with a usable result —
-  today that means `completed` (`completed_with_partial` is
-  [reserved](/reference/status) and not currently emitted). Shape below.
+  Present once `status` reaches a terminal value with a usable result
+  (`completed`). Shape below.
 </ResponseField>
 
 ### `triage_report`
@@ -123,13 +122,12 @@ The response is the scan record. Fields you should rely on:
 
 ## Coverage
 
-The scan record's `triage_report` does **not** include `coverage` —
-that field is delivered as a top-level key in the
-[webhook payload](/webhooks/payload). When polling, read the
-`coverage` object (delivered alongside the triage report on the webhook
-side) to see what was skipped; today the scan's `status` is `completed`
-even when individual steps failed (`completed_with_partial` is
-[reserved](/reference/status) and not currently emitted).
+Poll responses include the [`coverage`](/concepts/coverage) object too
+— it lives at `triage_report.coverage` on `GET /api/v2/scans/{scan_id}`.
+On the [webhook payload](/webhooks/payload) the same object is delivered
+as a top-level `coverage` key. Same fields either way; only the
+placement differs. The scan's `status` is `completed` even when
+individual steps were skipped — read `coverage` to see what ran.
 
 ## Example
 

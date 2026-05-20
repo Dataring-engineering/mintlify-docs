@@ -4,8 +4,6 @@ description: "Per-URL evidence the triage report cites."
 icon: "list-tree"
 ---
 
-{/* sources: src/services/strategies/llm_decision.py, docs/API_FIELD_REFERENCE.md */}
-
 `evidence_index` is an array of structured entries representing the URLs
 and external context the triage report cites. Use it to render
 reviewer-facing panels without parsing the free-text `reason_summary`.
@@ -23,10 +21,10 @@ Every entry has:
 </ResponseField>
 
 <ResponseField name="ref" type="string">
-  When the contextual model cited the entry by reference (`link_3`,
+  When Tumban cited the entry by reference (`link_3`,
   `external_mention_2`, …), this field correlates the entry to the
   matching token inside `reason_summary` — use it to highlight the
-  cited URL alongside the model's prose.
+  cited URL alongside the prose summary.
 </ResponseField>
 
 Type-specific fields:
@@ -102,7 +100,7 @@ Type-specific fields:
 
 ## Empty array
 
-`evidence_index` can be `[]` — for example, when only the deterministic
-strategies fired, or when the contextual model hit an infrastructure
-error. Treat an empty array as "no contextual evidence to surface", not
-as a feature failure.
+`evidence_index` can be `[]` even on a flagged scan — Tumban may reach
+a decision from signals that don't have a per-URL citation to surface.
+Treat an empty array as "no per-URL evidence to render", not as a
+feature failure.

@@ -4,47 +4,29 @@ description: "How confident Tumban is in a recommendation."
 icon: "gauge-simple-high"
 ---
 
-{/* sources: src/services/aggregator.py:_determine_confidence */}
-
 Every triage report includes a `confidence` field with one of three
-values. Each value is produced by a specific set of triggers:
+values:
 
-| Value | Triggered by (any one) |
-|-------|------------------------|
-| `high` | Blocklist score `≥ 85`; **or** two or more strategies returned a non-zero score; **or** aggregated score is `0` (the `no_flags` fast-path always reports `high`). |
-| `medium` | Aggregated score `≥ 60` from a single non-zero strategy; **or** the contextual model itself reported `confidence: "high"`. |
-| `low` | The judge model was invoked and reported `low`; **or** a single strategy fired with a score `> 0` but none of the higher triggers matched. |
+| Value | What it means |
+|-------|---------------|
+| `high` | Tumban has strong, corroborated evidence backing the recommendation. Act on it without further qualification. |
+| `medium` | Tumban has solid signal but less corroboration. Useful, but a manual reviewer may want to spot-check on edge cases. |
+| `low` | Tumban surfaced something worth looking at, but the signal is thin or borderline. Treat as a review-worthy lead, not a verdict. |
 
 `confidence` is **never `low` when `recommendation` is `no_flags`** —
-the score-`0` fast-path always returns `high`. Don't gate review work
-on `confidence: low` for clean profiles; it can't happen.
-
-## How it's derived
-
-Tumban determines confidence after aggregation. Rules are evaluated **in
-order**; the first matching rule wins:
-
-1. **Strong deterministic match** — blocklist strategy score `≥ 85`
-   → `high`. The blocklist is exact and fast, so a hit is treated as
-   high confidence on its own.
-2. **Multiple strategies agree** — two or more of (blocklist,
-   content safety, contextual model) returned a non-zero score
-   → `high`.
-3. **Single strong strategy** — aggregated score `≥ 60` from a single
-   non-zero strategy → `medium`. One signal pointing this high is
-   meaningful even without corroboration.
-4. **Contextual model is confident** — the contextual model reports
-   its own `confidence` as `high` → `medium`.
-5. **Borderline case adjudicated by the judge** — the judge model was
-   invoked → result inherits the judge's own `confidence_level`
-   (`low` or `medium`).
-6. **Single weak signal** — aggregated score `> 0` with none of the
-   above → `low`.
-7. **No flags detected** — aggregated score is `0` → `high` confidence
-   in `no_flags`.
+clean profiles always come back with `high` confidence in the
+`no_flags` decision. Don't gate review work on that combination; it
+cannot occur.
 
 ## When to use it
 
-Use `confidence` to weight review priority within a recommendation tier.
-A `review_high` with `confidence: "high"` is worth processing before a
-`review_high` with `confidence: "low"`.
+Use `confidence` to weight review priority **within** a recommendation
+tier. A `review_high` with `confidence: "high"` is worth processing
+before a `review_high` with `confidence: "low"`. Within a queue sorted
+by `risk_score`, breaking ties on `confidence` is a reasonable second
+key.
+
+How Tumban arrives at each level is not part of the public contract —
+the exact triggers may change as detection is tuned. Treat `confidence`
+as an interpretation of the same evidence summarised by `reason_codes`
+and `evidence_index`, not as an independent signal.

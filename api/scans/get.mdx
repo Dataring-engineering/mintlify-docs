@@ -117,17 +117,8 @@ The response is the scan record. Fields you should rely on:
 </ResponseField>
 
 <ResponseField name="evidence_index" type="object[]">
-  Per-URL evidence the contextual model cited. See
+  Per-URL evidence Tumban cited in support of the decision. See
   [Evidence index](/concepts/evidence-index).
-</ResponseField>
-
-<ResponseField name="strategy_scores" type="object" required>
-  Internal per-strategy scores: `blocklist`, `content_safety`, `llm`.
-  Useful for debugging unexpected recommendations.
-</ResponseField>
-
-<ResponseField name="judge_model_invoked" type="boolean" required>
-  Whether the judge model was invoked to resolve a borderline score.
 </ResponseField>
 
 ## Coverage
@@ -167,8 +158,6 @@ curl https://api.tumban.com/api/v2/scans/550e8400-e29b-41d4-a716-446655440000 \
     "reason_summary": "Direct link to a prohibited platform combined with adult keywords in bio.",
     "review_targets": ["https://prohibited-platform.example/username"],
     "link_chain": "Profile -> External site",
-    "strategy_scores": {"blocklist": 50, "content_safety": 0, "llm": 85},
-    "judge_model_invoked": false,
     "evidence_index": [
       {
         "ref": "link_1",
@@ -182,10 +171,7 @@ curl https://api.tumban.com/api/v2/scans/550e8400-e29b-41d4-a716-446655440000 \
 ```
 
 <Note>
-  The response also includes internal fields not listed above —
-  `canonical_url`, `username`, `platform`, `last_scanned_at`, `bio`,
-  `profile_image_url`, `banner_image_url`, `social_links`,
-  `direct_links`, `blob_references`, `updated_at`, and `org_id`. These
+  The response also includes internal fields not listed above. These
   reflect the underlying scan record and are subject to change. Do not
   rely on their names, types, or presence; treat them as opaque.
 </Note>
@@ -208,7 +194,5 @@ read-only sections:
   codes, reason summary.
 - **Coverage** — which analysis steps ran, login-blocked URLs,
   referrer match counts.
-- **Strategy scores** — internal per-strategy scores. Useful for
-  debugging an unexpected recommendation.
 - **Raw JSON** — collapsible *"Show full document"* panel that
   exposes the entire scan record.

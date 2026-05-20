@@ -67,15 +67,6 @@
                   "api/webhook-secret/rotate"
                 ]
               },
-              {
-                "group": "Usage",
-                "pages": [
-                  "api/usage/totals",
-                  "api/usage/scans",
-                  "api/usage/priority",
-                  "api/usage/warmer-health"
-                ]
-              },
               "api/errors"
             ]
           },

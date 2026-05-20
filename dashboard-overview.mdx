@@ -24,9 +24,9 @@ The dashboard has three primary regions:
 
 | Item | What it covers | API pages |
 |------|----------------|-----------|
-| **Home** | Overview dashboard with **Needs your attention** and **Recent scans** panels, plus stat tiles. | [List org scans](/api/org/list-scans), [Get usage totals](/api/usage/totals) |
+| **Home** | Overview dashboard with **Needs your attention** and **Recent scans** panels, plus stat tiles. | [List org scans](/api/org/list-scans) |
 | **Scan** | Submit a single profile URL, view your local submission history (persisted in your browser). | [Create scan](/api/scans/create), [Get scan](/api/scans/get) |
-| **Usage** | Bar chart and donut chart for scan throughput and recommendation distribution. Admin-only in the dashboard. | [Get scan timeseries](/api/usage/scans), [Get priority distribution](/api/usage/priority), [Get usage totals](/api/usage/totals) |
+| **Usage** | Bar chart and donut chart for scan throughput and recommendation distribution. Admin-only in the dashboard. Usage data is dashboard-only — there is no public API to read it. | (Dashboard-only.) |
 | **API Keys** | Create, list, and revoke API keys. | [Create API key](/api/keys/create), [List API keys](/api/keys/list), [Revoke API key](/api/keys/revoke) |
 | **Webhooks** | Set the default callback URL and rotate the webhook secret. | [Update org settings](/api/org/update-settings), [Rotate webhook secret](/api/webhook-secret/rotate) |
 | **Organisation** | Manage members and organization profile. Admin-only — hidden for members. | (Not exposed on the API.) |
@@ -50,7 +50,7 @@ documented on each endpoint page.
 | Revoke API key | Trash icon visible to all members; the API rejects revocations a member is not authorized for | Members revoke their own keys; admins revoke any |
 | Set default callback URL | Hidden for non-admins | Admin-only |
 | Rotate webhook secret | Hidden for non-admins | Admin-only |
-| View Usage page | Members see "Admin only" notice | API itself is not role-gated; members can call directly |
+| View Usage page | Members see "Admin only" notice | (Dashboard-only; not on the public API.) |
 | View Organisation page | Hidden for non-admins | (Not on the API.) |
 
 ## Sign-in

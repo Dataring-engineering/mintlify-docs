@@ -5,7 +5,7 @@ license: Proprietary. Contact hello@tumban.com for terms.
 compatibility: Tumban v2 public API. Requires HTTPS, JSON over `application/json`, and a bearer credential (`sk_…` API key or dashboard session token).
 metadata:
   api-version: v2
-  base-url: https://api.tumban.com
+  base-url: https://api-v2.tumban.com
   docs: https://docs.tumban.com
 ---
 
@@ -20,7 +20,7 @@ webhook to a `callback_url` or polled with `GET /api/v2/scans/{scan_id}`.
 ## Base URL and auth
 
 ```
-Base URL: https://api.tumban.com
+Base URL: https://api-v2.tumban.com
 All v2 endpoints mounted under: /api/v2
 ```
 

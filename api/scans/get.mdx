@@ -58,6 +58,14 @@ The response is the scan record. Fields you should rely on:
   When pipeline processing finished. `null` while still processing.
 </ResponseField>
 
+<ResponseField name="is_banned" type="boolean | null">
+  `null` until the ban-checker has evaluated this profile, then `true`
+  if the creator has been banned by the upstream platform (e.g. 404 /
+  410 / redirect on the profile URL) or `false` if the profile is
+  still live. Useful for skipping enforcement on already-banned
+  creators.
+</ResponseField>
+
 <ResponseField name="callback_url" type="string">
   The callback URL the scan was submitted with (or the org default if
   not provided), as a string. Empty when no callback was configured.
@@ -145,6 +153,7 @@ curl https://api.tumban.com/api/v2/scans/550e8400-e29b-41d4-a716-446655440000 \
   "created_at": "2026-04-29T12:00:00.123456+00:00",
   "processing_started_at": "2026-04-29T12:00:01.234567+00:00",
   "processing_completed_at": "2026-04-29T12:01:38.987654+00:00",
+  "is_banned": false,
   "callback_url": "https://your-app.example/webhooks/tumban",
   "metadata": {"reviewer_id": "rv_42"},
   "webhook_delivered_at": "2026-04-29T12:01:39.345678+00:00",

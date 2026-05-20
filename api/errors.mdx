@@ -63,6 +63,7 @@ Use `loc` to locate the field — the last segment is the field name.
 | 401 | `Invalid or revoked API key` | The `sk_…` token is unknown or revoked. |
 | 403 | `Token missing org_id — make sure you have an active organization selected` | Dashboard session has no active org. |
 | 403 | `API key management requires a dashboard session. API keys cannot revoke API keys.` | [Revoke API key](/api/keys/revoke) when called with `sk_…` auth. |
+| 403 | `This endpoint requires a dashboard session. API keys are not permitted.` | [Create API key](/api/keys/create), [List API keys](/api/keys/list) when called with `sk_…` auth. |
 | 403 | `Admin role required` | [Update org settings](/api/org/update-settings), [Rotate webhook secret](/api/webhook-secret/rotate) when the caller is a non-admin. |
 | 403 | `This endpoint requires an admin dashboard session. API keys cannot access admin endpoints.` | [Update org settings](/api/org/update-settings), [Rotate webhook secret](/api/webhook-secret/rotate) when called with `sk_…` auth. |
 | 422 | `Invalid callback URL: <reason>` | [Update org settings](/api/org/update-settings) when `default_callback_url` resolves to a private/internal address. |

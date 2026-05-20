@@ -80,7 +80,7 @@ POST /api/v2/batch
 
 <CodeGroup>
 ```bash curl
-curl -X POST https://api.tumban.com/api/v2/batch \
+curl -X POST https://api-v2.tumban.com/api/v2/batch \
   -H "Authorization: Bearer sk_xxx" \
   -H "Content-Type: application/json" \
   -d '{
@@ -98,7 +98,7 @@ curl -X POST https://api.tumban.com/api/v2/batch \
 import httpx
 
 response = httpx.post(
-    "https://api.tumban.com/api/v2/batch",
+    "https://api-v2.tumban.com/api/v2/batch",
     headers={"Authorization": "Bearer sk_xxx"},
     json={
         "profile_urls": [

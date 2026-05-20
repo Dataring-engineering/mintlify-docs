@@ -58,7 +58,7 @@ POST /api/v2/scan
 
 <CodeGroup>
 ```bash curl
-curl -X POST https://api.tumban.com/api/v2/scan \
+curl -X POST https://api-v2.tumban.com/api/v2/scan \
   -H "Authorization: Bearer sk_xxx" \
   -H "Content-Type: application/json" \
   -d '{
@@ -72,7 +72,7 @@ curl -X POST https://api.tumban.com/api/v2/scan \
 import httpx
 
 response = httpx.post(
-    "https://api.tumban.com/api/v2/scan",
+    "https://api-v2.tumban.com/api/v2/scan",
     headers={"Authorization": "Bearer sk_xxx"},
     json={
         "profile_url": "https://creator.example/username",
@@ -83,7 +83,7 @@ response = httpx.post(
 ```
 
 ```js node
-const res = await fetch("https://api.tumban.com/api/v2/scan", {
+const res = await fetch("https://api-v2.tumban.com/api/v2/scan", {
   method: "POST",
   headers: {
     Authorization: "Bearer sk_xxx",

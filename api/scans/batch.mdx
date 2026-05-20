@@ -134,23 +134,29 @@ response = httpx.post(
 
 When the org's `daily_scan_limit` has capacity for fewer profiles than
 were requested, the batch is accepted with the leading N profiles only
-and the response sets `daily_limit_truncated` and `profiles_skipped`:
+and the response sets `daily_limit_truncated` and `profiles_skipped`.
+
+**Worked example.** Submit 50 URLs with 30 remaining in the daily
+quota → the **first 30** URLs (in submission order) are queued; the
+**last 20** are dropped:
 
 ```json
 {
   "batch_id": "9b8a7c6d-1234-5678-9abc-def012345678",
   "status": "processing",
-  "total_profiles": 2,
+  "total_profiles": 30,
   "submitted_at": "2026-04-29T12:00:00.123456+00:00",
-  "estimated_completion": "2026-04-29T12:04:00.123456+00:00",
+  "estimated_completion": "2026-04-29T13:00:00.123456+00:00",
   "daily_limit_truncated": true,
-  "profiles_skipped": 1
+  "profiles_skipped": 20
 }
 ```
 
-The remaining profile URLs (the last `profiles_skipped` entries from the
-request, in order) were not queued. Resubmit them after the next daily
-window opens at `00:00 UTC`.
+`total_profiles` is the count actually queued (30), not the count
+submitted (50). To recover the skipped URLs, take the last
+`profiles_skipped` entries from your original `profile_urls` array — in
+the same order — and resubmit them after the next daily window opens at
+`00:00 UTC`.
 
 ## Errors
 

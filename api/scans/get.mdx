@@ -58,6 +58,14 @@ The response is the scan record. Fields you should rely on:
   When pipeline processing finished. `null` while still processing.
 </ResponseField>
 
+<ResponseField name="is_banned" type="boolean | null">
+  `null` until the ban-checker has evaluated this profile, then `true`
+  if the creator has been banned by the upstream platform (e.g. 404 /
+  410 / redirect on the profile URL) or `false` if the profile is
+  still live. Useful for skipping enforcement on already-banned
+  creators.
+</ResponseField>
+
 <ResponseField name="callback_url" type="string">
   The callback URL the scan was submitted with (or the org default if
   not provided), as a string. Empty when no callback was configured.
@@ -78,9 +86,8 @@ The response is the scan record. Fields you should rely on:
 </ResponseField>
 
 <ResponseField name="triage_report" type="object">
-  Present once `status` reaches a terminal value with a usable result —
-  today that means `completed` (`completed_with_partial` is
-  [reserved](/reference/status) and not currently emitted). Shape below.
+  Present once `status` reaches a terminal value with a usable result
+  (`completed`). Shape below.
 </ResponseField>
 
 ### `triage_report`
@@ -123,13 +130,12 @@ The response is the scan record. Fields you should rely on:
 
 ## Coverage
 
-The scan record's `triage_report` does **not** include `coverage` —
-that field is delivered as a top-level key in the
-[webhook payload](/webhooks/payload). When polling, read the
-`coverage` object (delivered alongside the triage report on the webhook
-side) to see what was skipped; today the scan's `status` is `completed`
-even when individual steps failed (`completed_with_partial` is
-[reserved](/reference/status) and not currently emitted).
+Poll responses include the [`coverage`](/concepts/coverage) object too
+— it lives at `triage_report.coverage` on `GET /api/v2/scans/{scan_id}`.
+On the [webhook payload](/webhooks/payload) the same object is delivered
+as a top-level `coverage` key. Same fields either way; only the
+placement differs. The scan's `status` is `completed` even when
+individual steps were skipped — read `coverage` to see what ran.
 
 ## Example
 
@@ -147,6 +153,7 @@ curl https://api.tumban.com/api/v2/scans/550e8400-e29b-41d4-a716-446655440000 \
   "created_at": "2026-04-29T12:00:00.123456+00:00",
   "processing_started_at": "2026-04-29T12:00:01.234567+00:00",
   "processing_completed_at": "2026-04-29T12:01:38.987654+00:00",
+  "is_banned": false,
   "callback_url": "https://your-app.example/webhooks/tumban",
   "metadata": {"reviewer_id": "rv_42"},
   "webhook_delivered_at": "2026-04-29T12:01:39.345678+00:00",

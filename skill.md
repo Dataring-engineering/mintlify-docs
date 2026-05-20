@@ -96,14 +96,21 @@ form is wired up.
 
 ## Authentication and role model
 
-API keys can call almost every endpoint. The three exceptions below
+API keys can call almost every endpoint. The five exceptions below
 require a dashboard session — API-key auth gets `403` immediately:
 
 | Endpoint | Required auth |
 |----------|---------------|
 | `PATCH /api/v2/org/settings` | Dashboard session, role `admin` |
 | `POST /api/v2/org/webhook-secret/rotate` | Dashboard session, role `admin` |
+| `POST /api/v2/org/api-keys` | Dashboard session (any role) |
+| `GET /api/v2/org/api-keys` | Dashboard session (any role) |
 | `DELETE /api/v2/org/api-keys/{key_id}` | Dashboard session (role-aware — see below) |
+
+Credential-management endpoints (the three `/api-keys` rows) reject
+`sk_…` auth so a leaked key cannot mint, list, or revoke other keys.
+The exact 403 detail strings differ between create/list and revoke —
+see `https://docs.tumban.com/api/errors` for the canonical list.
 
 ### Revoke role rules
 
@@ -140,19 +147,24 @@ POST /api/v2/scan
   → result also queryable via GET /api/v2/scans/{scan_id}
 ```
 
-`status` values today:
+`status` values:
 
 - `processing` — in flight.
-- `completed` — terminal; triage report available.
+- `completed` — terminal; triage report available. May reflect a
+  pipeline where some steps were skipped (slow page, login wall,
+  transient model error). The `coverage` object records what actually
+  ran (e.g. `social_links_checked`, `blocked_by_login`). Read
+  `coverage` to detect partial pipelines; do not gate partial-handling
+  logic on the `status` field.
 - `failed` — terminal; `error` field set.
-- `completed_with_partial` — **reserved**, declared in the schema but
-  not currently emitted by the pipeline. Today, scans that experience
-  step failures (slow page, login wall, transient model error) still
-  return as `completed`; the partial-coverage details surface inside
-  the `coverage` object (e.g. `social_links_checked`, `blocked_by_login`).
-  Keep `completed_with_partial` in `switch`/`match` statements so your
-  integration is forward-compatible, but don't gate partial-handling
-  logic on receiving it.
+
+### `is_banned`
+
+`GET /api/v2/scans/{scan_id}` also returns a top-level `is_banned`
+field (`bool | null`). `null` until the ban-checker has evaluated the
+profile; then `true` if the upstream platform has banned the creator
+(404 / 410 / redirect on the profile URL) or `false` if the profile is
+still live. Useful for skipping enforcement on already-banned creators.
 
 ## Confidence semantics
 
@@ -285,8 +297,9 @@ A correct V2 verifier performs three checks:
 
 ## Gotchas worth surfacing to a user
 
-- **`completed_with_partial` is reserved.** Reading from `coverage` is
-  the only reliable way to detect partial pipelines today.
+- **Partial pipelines surface in `coverage`, not in `status`.** A
+  scan with step failures still reports `status: "completed"` —
+  read the `coverage` object to see what ran.
 - **Webhook secret is plaintext server-side.** Treat any leak as a
   full compromise of webhook authenticity; rotate immediately.
 - **Revoke is `DELETE`, not `POST` + `/revoke`.** And the path has no

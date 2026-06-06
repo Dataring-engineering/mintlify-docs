@@ -89,5 +89,7 @@ curl -X PATCH https://api-v2.tumban.com/api/v2/org/settings \
 </Steps>
 
 <Note>
-  Non-admins do not see the **Default Callback URL** controls.
+  The **Default Callback URL** controls are visible to all members, but
+  the underlying endpoint is admin-only — a non-admin who clicks
+  **Save** gets a `403`.
 </Note>

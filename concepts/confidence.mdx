@@ -13,10 +13,13 @@ values:
 | `medium` | Tumban has solid signal but less corroboration. Useful, but a manual reviewer may want to spot-check on edge cases. |
 | `low` | Tumban surfaced something worth looking at, but the signal is thin or borderline. Treat as a review-worthy lead, not a verdict. |
 
-`confidence` is **never `low` when `recommendation` is `no_flags`** —
-clean profiles always come back with `high` confidence in the
-`no_flags` decision. Don't gate review work on that combination; it
-cannot occur.
+A `no_flags` recommendation does **not** guarantee `high` confidence.
+A profile that is clear except for a single thin signal can come back
+`no_flags` with `medium` or `low` confidence, and a scan that hit an
+infrastructure fallback (see [`ANALYSIS_ERROR`](/reference/reason-codes),
+a neutral score) can return `no_flags` at `low` confidence. Only a
+profile with no signal at all is guaranteed `high`. Read `confidence`
+directly — never infer it from the recommendation tier.
 
 ## When to use it
 

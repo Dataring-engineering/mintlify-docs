@@ -10,6 +10,27 @@ A **scan** is a single profile URL being analyzed. A **batch** is a set of
 scans submitted together; each profile in a batch is processed
 independently.
 
+## Scan modes
+
+Every scan runs in one of two modes, chosen by the endpoint you call:
+
+| Mode | Submit via | What runs | Typical time |
+|------|-----------|-----------|--------------|
+| **Deep** | `POST /api/v2/scan/deep`, `POST /api/v2/batch/deep` | Full pipeline: profile data plus external context search, social-media scraping, and link traversal. | Under 2 minutes per scan |
+| **Quick** | `POST /api/v2/scan/quick`, `POST /api/v2/batch/quick` | Profile data only, scored by a fast model. Skips external search, social scraping, and link traversal. | ~30 seconds per scan |
+
+Both modes return the same response shape and the same
+[triage report](/api/scans/get) fields (`recommendation`,
+`risk_score`, `confidence`, `reason_codes`, `evidence_index`). The
+submission response and the scan record both carry a `scan_mode` field
+(`deep` or `quick`) so you can tell which ran. Because a quick scan
+skips steps, read the [`coverage`](/concepts/coverage) object to see
+what was and wasn't analyzed.
+
+Use quick scans for cheap, high-volume triage where profile-level
+signals are enough; use deep scans when you need the full external
+footprint behind a decision.
+
 ## Lifecycle
 
 When you submit a scan, Tumban returns a `scan_id` and begins processing
@@ -33,15 +54,20 @@ roughly linearly with batch size while staying within the concurrency cap.
 
 ## Identifiers
 
-- `scan_id` — UUID returned from `POST /api/v2/scan`. Use it to fetch the
-  scan via [`GET /api/v2/scans/{scan_id}`](/api/scans/get).
-- `batch_id` — UUID returned from `POST /api/v2/batch`. Single scans get a
-  synthetic `single_<scan_id>` batch id for internal bookkeeping; you don't
-  need it for single scans.
+- `scan_id` — UUID returned from `POST /api/v2/scan/deep` or
+  `POST /api/v2/scan/quick`. Use it to fetch the scan via
+  [`GET /api/v2/scans/{scan_id}`](/api/scans/get).
+- `batch_id` — UUID returned from `POST /api/v2/batch/deep` or
+  `POST /api/v2/batch/quick`. Single scans get a synthetic
+  `single_<scan_id>` batch id for internal bookkeeping; you don't need
+  it for single scans.
 
 ## Deduplication
 
 Tumban canonicalizes the submitted URL and treats the canonical form as a
-unique key per organization. Re-submitting the same canonical URL archives
-the previous scan and starts a new one, so the most recent result is
-always the one you read back.
+unique key per organization **and scan mode**. Re-submitting the same
+canonical URL in the same mode archives the previous scan and starts a new
+one, so the most recent result is always the one you read back. Quick and
+deep scans of the same URL are deduplicated independently — a deep scan and
+a quick scan of one profile coexist as separate records, each kept current
+on its own.

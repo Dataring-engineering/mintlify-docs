@@ -18,8 +18,10 @@ footprint, then returns the result either by webhook or by polling.
 
 <Steps>
   <Step title="Submit">
-    Send the profile URL to `POST /api/v2/scan`. You receive a `scan_id`
-    immediately and the scan begins processing in the background.
+    Send the profile URL to `POST /api/v2/scan/deep` for a full scan, or
+    `POST /api/v2/scan/quick` for a faster, cheaper profile-only scan.
+    You receive a `scan_id` immediately and the scan begins processing
+    in the background.
   </Step>
   <Step title="Wait for the result">
     Tumban delivers the triage report to your `callback_url`, or you can poll

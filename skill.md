@@ -43,10 +43,17 @@ include mixed case.
 
 | Method | Path | Purpose |
 |--------|------|---------|
-| `POST` | `/api/v2/scan` | Submit a single profile URL |
-| `POST` | `/api/v2/batch` | Submit up to N profile URLs in one request |
+| `POST` | `/api/v2/scan/deep` | Submit a single profile URL — full (deep) scan |
+| `POST` | `/api/v2/scan/quick` | Submit a single profile URL — quick scan |
+| `POST` | `/api/v2/batch/deep` | Submit up to N profile URLs — full (deep) scans |
+| `POST` | `/api/v2/batch/quick` | Submit up to N profile URLs — quick scans |
 | `GET`  | `/api/v2/scans/{scan_id}` | Fetch a scan record (status + triage report) |
 | `GET`  | `/api/v2/batches/{batch_id}` | Fetch aggregate batch progress |
+
+There is **no** bare `POST /api/v2/scan` or `POST /api/v2/batch` — the
+mode is part of the path (`/deep` or `/quick`). Both submission shapes
+are otherwise identical and return the same response (plus a `scan_mode`
+field). See **Scan modes** below.
 
 ### Organization
 
@@ -135,11 +142,34 @@ path** — capture it from the rotation response immediately. If you
 lose it, rotate again and update every verifier in lockstep before
 sending any more outbound traffic that would expect the old signature.
 
+## Scan modes
+
+Every scan runs in one of two modes, selected by the endpoint path:
+
+| Mode | Submit via | Pipeline | Typical latency |
+|------|-----------|----------|-----------------|
+| **deep** | `/api/v2/scan/deep`, `/api/v2/batch/deep` | Full: profile data + external context search + social-media scraping + link traversal | < 2 min/scan |
+| **quick** | `/api/v2/scan/quick`, `/api/v2/batch/quick` | Profile data only, scored by a fast model — external search, social scraping, and link traversal are skipped | ~30 s/scan |
+
+- Request body is **identical** across modes (`profile_url` /
+  `profile_urls`, `callback_url`, `metadata`).
+- The submission response and the scan record both include a
+  `scan_mode` field (`"deep"` | `"quick"`). The **webhook payload does
+  not** carry `scan_mode`.
+- The triage report has the **same fields** in both modes. Because a
+  quick scan skips steps, the `coverage` object reflects what didn't
+  run (e.g. `social_links_checked: 0`).
+- On `GET /api/v2/scans/{scan_id}`, `scan_mode` may be **absent on
+  legacy scans** submitted before modes existed — treat absent as
+  `deep`.
+- Choose quick for cheap high-volume profile-level triage; deep when a
+  decision needs the full external footprint.
+
 ## Scan lifecycle
 
 ```
-POST /api/v2/scan
-  → { scan_id, status: "processing", submitted_at, estimated_completion }
+POST /api/v2/scan/deep   (or /api/v2/scan/quick)
+  → { scan_id, status: "processing", submitted_at, estimated_completion, scan_mode }
 
 (async)
   → scan runs server-side (timeout: 450 s)
@@ -160,11 +190,12 @@ POST /api/v2/scan
 
 ### `is_banned`
 
-`GET /api/v2/scans/{scan_id}` also returns a top-level `is_banned`
-field (`bool | null`). `null` until the ban-checker has evaluated the
-profile; then `true` if the upstream platform has banned the creator
-(404 / 410 / redirect on the profile URL) or `false` if the profile is
-still live. Useful for skipping enforcement on already-banned creators.
+`GET /api/v2/scans/{scan_id}` may also return a top-level `is_banned`
+field (`bool`). It is **absent** until the ban-checker has evaluated the
+profile (omitted, not `null`); then `true` if the upstream platform has
+banned the creator (404 / 410 / redirect on the profile URL) or `false`
+if the profile is still live. Test with `"is_banned" in response`.
+Useful for skipping enforcement on already-banned creators.
 
 ## Confidence semantics
 
@@ -176,9 +207,12 @@ still live. Useful for skipping enforcement on already-banned creators.
 - **`low`** — a thin or borderline lead. Treat as review-worthy, not
   as a verdict.
 
-`confidence` is **never `low` when `recommendation` is `no_flags`** —
-clean profiles always come back with `high` confidence in the
-`no_flags` decision. This combination cannot occur.
+A `no_flags` recommendation does **not** guarantee `high` confidence.
+A profile clear except for a single thin signal — or one that hit an
+infrastructure fallback (`ANALYSIS_ERROR`, neutral score) — can come
+back `no_flags` with `medium` or `low` confidence. Only a profile with
+no signal at all is guaranteed `high`. Read `confidence` directly;
+never infer it from the recommendation tier.
 
 How Tumban arrives at each level is **not part of the public contract**
 and may change without notice. Build against `confidence`,
@@ -256,8 +290,9 @@ A correct V2 verifier performs three checks:
 
 ### Submit a single scan and read the result via webhook
 
-1. `POST /api/v2/scan` with `profile_url`, `callback_url`,
-   optional `metadata` (any JSON, echoed back).
+1. `POST /api/v2/scan/deep` (or `/api/v2/scan/quick`) with
+   `profile_url`, `callback_url`, optional `metadata` (any JSON, echoed
+   back).
 2. Receive webhook at `callback_url`. Verify the V2 signature first;
    then process `recommendation`, `risk_score`, `evidence_index`, and
    `coverage`.
@@ -265,8 +300,9 @@ A correct V2 verifier performs three checks:
 
 ### Submit a batch and watch aggregate progress
 
-1. `POST /api/v2/batch` with `profile_urls`. Per-profile webhooks fire
-   independently as each scan completes.
+1. `POST /api/v2/batch/deep` (or `/api/v2/batch/quick`) with
+   `profile_urls` — every profile in the batch runs in that mode.
+   Per-profile webhooks fire independently as each scan completes.
 2. Poll `GET /api/v2/batches/{batch_id}` for aggregate counts
    (`completed`, `failed`, `in_progress`).
 3. If `daily_limit_truncated: true` is set on the submission response,
@@ -297,9 +333,19 @@ A correct V2 verifier performs three checks:
 
 ## Gotchas worth surfacing to a user
 
+- **Scan mode is in the path, not the body.** Submit to
+  `/api/v2/scan/deep` | `/scan/quick` | `/batch/deep` | `/batch/quick`.
+  There is no bare `/api/v2/scan` or `/api/v2/batch`. Body and response
+  shapes are identical; the response adds `scan_mode`.
+- **Dedup is scoped per (org, canonical URL, scan mode).** A deep scan
+  and a quick scan of the same URL coexist as separate records, each
+  kept current independently. Re-submitting the same URL *in the same
+  mode* archives the prior scan and starts a new one.
 - **Partial pipelines surface in `coverage`, not in `status`.** A
   scan with step failures still reports `status: "completed"` —
-  read the `coverage` object to see what ran.
+  read the `coverage` object to see what ran. Quick scans also surface
+  their skipped steps (link traversal, social scraping, external
+  search) in `coverage`.
 - **Webhook secret is plaintext server-side.** Treat any leak as a
   full compromise of webhook authenticity; rotate immediately.
 - **Revoke is `DELETE`, not `POST` + `/revoke`.** And the path has no
@@ -310,8 +356,9 @@ A correct V2 verifier performs three checks:
   the structured 429 body and `scan_id` as natural idempotency key.
 - **`org_id` is opaque.** Do not regex against hex or any specific
   alphabet. Compare for exact equality.
-- **The `confidence` field is never `low` when `recommendation` is
-  `no_flags`.** This combination cannot occur.
+- **`no_flags` does not imply `high` confidence.** A `no_flags` scan
+  can carry `medium` or `low` confidence (a thin single signal, or an
+  `ANALYSIS_ERROR` fallback). Read `confidence` directly.
 
 ## See also
 

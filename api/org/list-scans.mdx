@@ -20,8 +20,13 @@ GET /api/v2/org/scans
 
 ## Query parameters
 
-<ParamField query="limit" type="integer" default="10">
-  Maximum number of scans to return. Range: `1`–`50`.
+<ParamField query="limit" type="integer" default="20">
+  Maximum number of scans to return. Range: `1`–`100`.
+</ParamField>
+
+<ParamField query="after" type="string">
+  Pagination cursor. Pass the `next_cursor` from the previous response
+  to fetch the next page; omit it for the first page.
 </ParamField>
 
 <ParamField query="recommendation" type="string">
@@ -31,10 +36,47 @@ GET /api/v2/org/scans
   set, only completed scans are returned.
 </ParamField>
 
+<ParamField query="scan_mode" type="string">
+  Restrict to a single scan mode: `quick` or `deep`. `deep` also
+  matches legacy scans recorded before scan modes existed.
+</ParamField>
+
+<ParamField query="q" type="string">
+  Case-insensitive substring search over the profile URL and username,
+  for example `buymeacoffee.com/john` or `john`.
+</ParamField>
+
+<ParamField query="from_date" type="string">
+  Earliest submission date to include, `YYYY-MM-DD` (UTC, inclusive). A
+  malformed value returns `400`.
+</ParamField>
+
+<ParamField query="to_date" type="string">
+  Latest submission date to include, `YYYY-MM-DD` (UTC, inclusive). A
+  malformed value returns `400`.
+</ParamField>
+
+<ParamField query="sort_by" type="string" default="created_at">
+  Field to sort by: `created_at` or `risk_score`.
+</ParamField>
+
+<ParamField query="sort_order" type="string" default="desc">
+  Sort direction: `desc` (default) or `asc`.
+</ParamField>
+
 ## Response
 
 <ResponseField name="scans" type="object[]" required>
   List of scan summaries.
+</ResponseField>
+
+<ResponseField name="next_cursor" type="string">
+  Opaque cursor for the next page. Pass it back as the `after` query
+  parameter. `null` when there are no further results.
+</ResponseField>
+
+<ResponseField name="has_more" type="boolean" required>
+  `true` when more scans match beyond this page (`next_cursor` is set).
 </ResponseField>
 
 <ResponseField name="fetched_at" type="string" required>
@@ -55,6 +97,11 @@ GET /api/v2/org/scans
 <ResponseField name="status" type="string" required>
   See [Status values](/reference/status). Includes `processing` so
   in-flight scans are visible.
+</ResponseField>
+
+<ResponseField name="scan_mode" type="string">
+  `quick` or `deep`. `null` on legacy scans recorded before scan modes
+  existed.
 </ResponseField>
 
 <ResponseField name="submitted_at" type="string" required>
@@ -92,6 +139,7 @@ curl "https://api-v2.tumban.com/api/v2/org/scans?limit=5&recommendation=review_h
       "scan_id": "550e8400-e29b-41d4-a716-446655440000",
       "profile_url": "https://creator.example/username",
       "status": "completed",
+      "scan_mode": "deep",
       "submitted_at": "2026-04-29T12:00:00.123456+00:00",
       "completed_at": "2026-04-29T12:01:38.987654+00:00",
       "recommendation": "review_high",
@@ -99,6 +147,8 @@ curl "https://api-v2.tumban.com/api/v2/org/scans?limit=5&recommendation=review_h
       "confidence": "high"
     }
   ],
+  "next_cursor": "eyJmIjoiY3JlYXRlZF9hdCIsInYiOiIyMDI2LTA0LTI5VDEyOjAwOjAwKzAwOjAwIn0",
+  "has_more": true,
   "fetched_at": "2026-04-29T12:34:56.654321+00:00"
 }
 ```
@@ -108,15 +158,20 @@ curl "https://api-v2.tumban.com/api/v2/org/scans?limit=5&recommendation=review_h
 | Status | Detail |
 |--------|--------|
 | 400 | `Invalid recommendation values: [...]` — one or more values in `recommendation` are not allowed. |
+| 400 | `from_date must be YYYY-MM-DD` / `to_date must be YYYY-MM-DD` — the date filter is malformed. |
+| 400 | `from_date is not a valid calendar date` / `to_date is not a valid calendar date` — well-formed but not a real date (e.g. `2026-02-30`). |
 
 ## Using the dashboard
 
-The **Home** page renders two tables that read from this endpoint:
+Both the **Home** and **History** pages read from this endpoint:
 
-- **Needs your attention** — scans from the last 30 days with
-  `recommendation` of `review_high` or `review_medium`.
-- **Recent scans** — the eight most recent scans of any status.
+- **Home → Action Items** tile — count of last-30-day scans with
+  `recommendation` of `review_high` or `review_medium`; clicking it
+  deep-links into **History** with that filter applied.
+- **Home → Recent scans** — the most recent scans of any status.
+- **History** — the full search/filter view (recommendation, scan mode,
+  date range, and URL/username search), with pagination.
 
-The page polls in-flight (`processing`) scans every five seconds and
-updates rows in place. Click any non-processing row to open
+The Home page polls in-flight (`processing`) scans every five seconds
+and updates rows in place. Click any non-processing row to open
 [Get scan](/api/scans/get) detail.

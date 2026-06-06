@@ -31,11 +31,14 @@ You'll need a Tumban account with an active organization.
 
   <Step title="Submit a scan">
     Send the profile URL and a `callback_url` you control. The response
-    returns immediately with a `scan_id`.
+    returns immediately with a `scan_id`. This example runs a **deep
+    scan**; for a faster, cheaper profile-only scan, call
+    `/api/v2/scan/quick` with the same body. See
+    [Scan modes](/concepts/scans-and-batches#scan-modes).
 
     <CodeGroup>
     ```bash curl
-    curl -X POST https://api-v2.tumban.com/api/v2/scan \
+    curl -X POST https://api-v2.tumban.com/api/v2/scan/deep \
       -H "Authorization: Bearer sk_xxx" \
       -H "Content-Type: application/json" \
       -d '{
@@ -49,7 +52,7 @@ You'll need a Tumban account with an active organization.
     import httpx
 
     response = httpx.post(
-        "https://api-v2.tumban.com/api/v2/scan",
+        "https://api-v2.tumban.com/api/v2/scan/deep",
         headers={"Authorization": "Bearer sk_xxx"},
         json={
             "profile_url": "https://creator.example/username",
@@ -61,7 +64,7 @@ You'll need a Tumban account with an active organization.
     ```
 
     ```js node
-    const res = await fetch("https://api-v2.tumban.com/api/v2/scan", {
+    const res = await fetch("https://api-v2.tumban.com/api/v2/scan/deep", {
       method: "POST",
       headers: {
         Authorization: "Bearer sk_xxx",
@@ -84,7 +87,8 @@ You'll need a Tumban account with an active organization.
       "scan_id": "550e8400-e29b-41d4-a716-446655440000",
       "status": "processing",
       "submitted_at": "2026-04-29T12:00:00.123456+00:00",
-      "estimated_completion": "2026-04-29T12:02:00.123456+00:00"
+      "estimated_completion": "2026-04-29T12:02:00.123456+00:00",
+      "scan_mode": "deep"
     }
     ```
   </Step>

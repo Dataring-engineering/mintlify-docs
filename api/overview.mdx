@@ -58,10 +58,11 @@ See [Errors](/api/errors) for the status-code reference.
 
 ## Async processing
 
-Endpoints that submit work (`/scan`, `/batch`) return immediately with a
-status of `processing` and an estimated completion time. The final
-result is delivered either by webhook to your `callback_url` or by
-polling [`GET /api/v2/scans/{scan_id}`](/api/scans/get).
+Endpoints that submit work (`/scan/deep`, `/scan/quick`, `/batch/deep`,
+`/batch/quick`) return immediately with a status of `processing` and an
+estimated completion time. The final result is delivered either by
+webhook to your `callback_url` or by polling
+[`GET /api/v2/scans/{scan_id}`](/api/scans/get).
 
 ## Tenancy
 

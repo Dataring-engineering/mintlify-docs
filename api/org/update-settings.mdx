@@ -27,13 +27,16 @@ Members and API-key auth are rejected with `403`.
 ## Request body
 
 <ParamField body="default_callback_url" type="string">
-  HTTPS URL Tumban will use when a scan is submitted without an
-  explicit `callback_url`. Setting it once removes the need to send
+  URL Tumban will use when a scan is submitted without an explicit
+  `callback_url`. Both `http` and `https` are accepted (prefer `https`
+  in production). Setting it once removes the need to send
   `callback_url` on every request.
 
-  The URL must resolve to a public address. URLs that resolve to
-  private or internal address ranges (RFC1918, loopback, link-local,
-  multicast, CGNAT) are rejected with `422` to defend against SSRF.
+  The host must resolve to a public address. The URL is rejected with
+  `422` when the safety check fails — a disallowed scheme, a missing
+  host, a DNS-resolution failure, or a private/internal/reserved
+  address range (RFC1918, loopback, link-local, multicast, CGNAT) — to
+  defend against SSRF.
 </ParamField>
 
 ## Response
@@ -68,7 +71,7 @@ curl -X PATCH https://api-v2.tumban.com/api/v2/org/settings \
 | 400 | `No fields to update` — the request body contained no recognized fields. |
 | 403 | `Admin role required`, or `This endpoint requires an admin dashboard session. API keys cannot access admin endpoints.` |
 | 404 | `Org settings not found`. |
-| 422 | `Invalid callback URL: <reason>` — `default_callback_url` resolves to a private/internal address. |
+| 422 | `Invalid callback URL: <reason>` — `default_callback_url` failed the safety check. `<reason>` varies: disallowed scheme, missing host, DNS-resolution failure, or a private/internal/reserved address. |
 
 ## Using the dashboard
 
@@ -89,5 +92,7 @@ curl -X PATCH https://api-v2.tumban.com/api/v2/org/settings \
 </Steps>
 
 <Note>
-  Non-admins do not see the **Default Callback URL** controls.
+  The **Default Callback URL** controls are visible to all members, but
+  the underlying endpoint is admin-only — a non-admin who clicks
+  **Save** gets a `403`.
 </Note>

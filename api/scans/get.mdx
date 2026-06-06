@@ -17,8 +17,8 @@ GET /api/v2/scans/{scan_id}
 
 <ParamField path="scan_id" type="string" required>
   The `scan_id` returned by
-  [`POST /api/v2/scan`](/api/scans/create) or one of the per-profile
-  ids from a batch.
+  [`POST /api/v2/scan/deep`](/api/scans/create) (or `/scan/quick`) or
+  one of the per-profile ids from a batch.
 </ParamField>
 
 ## Response
@@ -31,10 +31,11 @@ The response is the scan record. Fields you should rely on:
 </ResponseField>
 
 <ResponseField name="batch_id" type="string" required>
-  The batch id. Scans submitted via [`POST /api/v2/scan`](/api/scans/create)
-  get a synthetic `single_<scan_id>` batch id for internal bookkeeping;
-  match on the `single_` prefix to distinguish single-scan submissions
-  from batched ones.
+  The batch id. Single scans (submitted via
+  [`POST /api/v2/scan/deep`](/api/scans/create) or `/scan/quick`) get a
+  synthetic `single_<scan_id>` batch id for internal bookkeeping; match
+  on the `single_` prefix to distinguish single-scan submissions from
+  batched ones.
 </ResponseField>
 
 <ResponseField name="url" type="string" required>
@@ -43,6 +44,14 @@ The response is the scan record. Fields you should rely on:
 
 <ResponseField name="status" type="string" required>
   See [Status values](/reference/status).
+</ResponseField>
+
+<ResponseField name="scan_mode" type="string">
+  Which mode the scan ran in: `deep` or `quick`. A quick scan skips
+  link traversal, social-media scraping, and external context search;
+  the [`coverage`](/concepts/coverage) object on the triage report
+  reflects the skipped steps. May be absent on legacy scans submitted
+  before scan modes existed (treat absent as `deep`).
 </ResponseField>
 
 <ResponseField name="created_at" type="string" required>
@@ -58,12 +67,14 @@ The response is the scan record. Fields you should rely on:
   When pipeline processing finished. `null` while still processing.
 </ResponseField>
 
-<ResponseField name="is_banned" type="boolean | null">
-  `null` until the ban-checker has evaluated this profile, then `true`
-  if the creator has been banned by the upstream platform (e.g. 404 /
-  410 / redirect on the profile URL) or `false` if the profile is
-  still live. Useful for skipping enforcement on already-banned
-  creators.
+<ResponseField name="is_banned" type="boolean">
+  Optional. **Absent** until the ban-checker has evaluated this profile
+  — the key is omitted (not `null`) on fresh scans — then `true` if the
+  creator has been banned by the upstream platform (e.g. 404 / 410 /
+  redirect on the profile URL) or `false` if the profile is still live.
+  Test for it with `"is_banned" in response`, not
+  `response["is_banned"] is None`. Useful for skipping enforcement on
+  already-banned creators.
 </ResponseField>
 
 <ResponseField name="callback_url" type="string">
@@ -150,6 +161,7 @@ curl https://api-v2.tumban.com/api/v2/scans/550e8400-e29b-41d4-a716-446655440000
   "batch_id": "single_550e8400-e29b-41d4-a716-446655440000",
   "url": "https://creator.example/username",
   "status": "completed",
+  "scan_mode": "deep",
   "created_at": "2026-04-29T12:00:00.123456+00:00",
   "processing_started_at": "2026-04-29T12:00:01.234567+00:00",
   "processing_completed_at": "2026-04-29T12:01:38.987654+00:00",

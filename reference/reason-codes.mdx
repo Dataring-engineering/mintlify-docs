@@ -61,11 +61,13 @@ Emitted when Tumban's content classification flagged text or an image.
 
 ## Adjudication codes
 
-Emitted when a follow-up review pass evaluated a borderline score.
+Emitted when a follow-up review pass evaluated a borderline score and
+**changed** it. A pass that leaves the score unchanged emits no
+adjudication code.
 
 | Code | Meaning |
 |------|---------|
-| `SECONDARY_REVIEW_CONFIRMED` | Follow-up review pass agreed with the initial score. |
+| `SECONDARY_REVIEW_CONFIRMED` | Follow-up review pass **raised** the score, escalating it to at least `review_medium`. |
 | `SECONDARY_REVIEW_DOWNGRADED` | Follow-up review pass downgraded the initial score. |
 
 ## Failure codes

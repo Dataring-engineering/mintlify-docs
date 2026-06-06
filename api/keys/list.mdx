@@ -59,8 +59,10 @@ GET /api/v2/org/api-keys
 </ResponseField>
 
 <ResponseField name="created_by" type="string">
-  User id of the creator, when available. `null` for keys created via
-  the API.
+  User id of the dashboard user who created the key. Keys can only be
+  created from a dashboard session, so this is populated for every key
+  created through the API; `null` appears only on legacy records that
+  predate the field.
 </ResponseField>
 
 <ResponseField name="revoked_at" type="string">

@@ -4,14 +4,28 @@ description: "Submit multiple profile URLs in a single request."
 icon: "layer-group"
 ---
 
-{/* sources: src/api/routes_v2.py:create_batch_scan_v2, src/models/profile.py:BatchScanRequestV2,BatchScanResponse */}
+{/* sources: src/api/routes_v2.py:create_batch_scan_v2,create_batch_quickscan_v2, src/models/profile.py:BatchScanRequestV2,BatchScanResponse */}
 
 Submit multiple profile URLs in one request. The response returns a
 `batch_id` immediately; each profile is processed independently and
 delivers its own webhook.
 
+The scan mode is selected by the path you call — every profile in the
+batch runs in that mode:
+
+| Mode | Endpoint | Behaviour |
+|------|----------|-----------|
+| Deep | `POST /api/v2/batch/deep` | Full analysis per profile. Each scan typically completes in under two minutes. |
+| Quick | `POST /api/v2/batch/quick` | Cheaper and faster per profile — skips link traversal, social-media scraping, and external context search. Each scan typically completes in about 30 seconds. |
+
+Both modes accept the same request body and return the same response
+shape (the `scan_mode` field echoes which one ran). See
+[Scan modes](/concepts/scans-and-batches#scan-modes) for the full
+comparison.
+
 ```http
-POST /api/v2/batch
+POST /api/v2/batch/deep
+POST /api/v2/batch/quick
 ```
 
 ## Request body
@@ -61,6 +75,11 @@ POST /api/v2/batch
   cap.
 </ResponseField>
 
+<ResponseField name="scan_mode" type="string" required>
+  Which mode ran for every profile in the batch: `deep` or `quick`.
+  Echoes the endpoint you called.
+</ResponseField>
+
 <ResponseField name="daily_limit_truncated" type="boolean">
   Present and `true` only when the batch was partially accepted because
   the org's `daily_scan_limit` had remaining capacity for fewer profiles
@@ -80,7 +99,7 @@ POST /api/v2/batch
 
 <CodeGroup>
 ```bash curl
-curl -X POST https://api-v2.tumban.com/api/v2/batch \
+curl -X POST https://api-v2.tumban.com/api/v2/batch/deep \
   -H "Authorization: Bearer sk_xxx" \
   -H "Content-Type: application/json" \
   -d '{
@@ -98,7 +117,7 @@ curl -X POST https://api-v2.tumban.com/api/v2/batch \
 import httpx
 
 response = httpx.post(
-    "https://api-v2.tumban.com/api/v2/batch",
+    "https://api-v2.tumban.com/api/v2/batch/deep",
     headers={"Authorization": "Bearer sk_xxx"},
     json={
         "profile_urls": [
@@ -119,9 +138,13 @@ response = httpx.post(
   "status": "processing",
   "total_profiles": 3,
   "submitted_at": "2026-04-29T12:00:00.123456+00:00",
-  "estimated_completion": "2026-04-29T12:06:00.123456+00:00"
+  "estimated_completion": "2026-04-29T12:06:00.123456+00:00",
+  "scan_mode": "deep"
 }
 ```
+
+To run a quick batch instead, call `/api/v2/batch/quick` with the same
+body. The response is identical except `scan_mode` is `"quick"`.
 
 <Note>
   The batch's `scan_id`s are not returned in the response. Read each
@@ -147,6 +170,7 @@ quota → the **first 30** URLs (in submission order) are queued; the
   "total_profiles": 30,
   "submitted_at": "2026-04-29T12:00:00.123456+00:00",
   "estimated_completion": "2026-04-29T13:00:00.123456+00:00",
+  "scan_mode": "deep",
   "daily_limit_truncated": true,
   "profiles_skipped": 20
 }

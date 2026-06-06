@@ -4,13 +4,28 @@ description: "Submit a single profile URL for analysis."
 icon: "circle-play"
 ---
 
-{/* sources: src/api/routes_v2.py:create_scan_v2, src/models/profile.py:ScanRequestV2,ScanResponse */}
+{/* sources: src/api/routes_v2.py:create_scan_v2,create_quickscan_v2, src/models/profile.py:ScanRequestV2,ScanResponse */}
 
 Submit a single profile URL for ToS compliance analysis. The request
 returns a `scan_id` immediately; processing happens in the background.
 
+The scan mode is selected by the path you call:
+
+| Mode | Endpoint | Behaviour |
+|------|----------|-----------|
+| Deep | `POST /api/v2/scan/deep` | Full analysis — profile data plus link traversal, social-media scraping, and external context search. Typically completes in under two minutes. |
+| Quick | `POST /api/v2/scan/quick` | Cheaper and faster — skips link traversal, social-media scraping, and external context search; runs a fast model on the profile data only. Typically completes in about 30 seconds. |
+
+Both modes accept the same request body and return the same response
+shape (the `scan_mode` field echoes which one ran). The resulting
+[triage report](/api/scans/get) has the same fields in either mode;
+read the [`coverage`](/concepts/coverage) object to see which steps a
+quick scan skipped. See [Scan modes](/concepts/scans-and-batches#scan-modes)
+for the full comparison.
+
 ```http
-POST /api/v2/scan
+POST /api/v2/scan/deep
+POST /api/v2/scan/quick
 ```
 
 ## Request body
@@ -50,15 +65,20 @@ POST /api/v2/scan
 </ResponseField>
 
 <ResponseField name="estimated_completion" type="string" required>
-  ISO 8601 UTC timestamp of the expected completion time. The scan
-  typically finishes in under two minutes.
+  ISO 8601 UTC timestamp of the expected completion time. A deep scan
+  typically finishes in under two minutes; a quick scan in about 30
+  seconds.
+</ResponseField>
+
+<ResponseField name="scan_mode" type="string" required>
+  Which mode ran: `deep` or `quick`. Echoes the endpoint you called.
 </ResponseField>
 
 ## Example
 
 <CodeGroup>
 ```bash curl
-curl -X POST https://api-v2.tumban.com/api/v2/scan \
+curl -X POST https://api-v2.tumban.com/api/v2/scan/deep \
   -H "Authorization: Bearer sk_xxx" \
   -H "Content-Type: application/json" \
   -d '{
@@ -72,7 +92,7 @@ curl -X POST https://api-v2.tumban.com/api/v2/scan \
 import httpx
 
 response = httpx.post(
-    "https://api-v2.tumban.com/api/v2/scan",
+    "https://api-v2.tumban.com/api/v2/scan/deep",
     headers={"Authorization": "Bearer sk_xxx"},
     json={
         "profile_url": "https://creator.example/username",
@@ -83,7 +103,7 @@ response = httpx.post(
 ```
 
 ```js node
-const res = await fetch("https://api-v2.tumban.com/api/v2/scan", {
+const res = await fetch("https://api-v2.tumban.com/api/v2/scan/deep", {
   method: "POST",
   headers: {
     Authorization: "Bearer sk_xxx",
@@ -103,8 +123,20 @@ const res = await fetch("https://api-v2.tumban.com/api/v2/scan", {
   "scan_id": "550e8400-e29b-41d4-a716-446655440000",
   "status": "processing",
   "submitted_at": "2026-04-29T12:00:00.123456+00:00",
-  "estimated_completion": "2026-04-29T12:02:00.123456+00:00"
+  "estimated_completion": "2026-04-29T12:02:00.123456+00:00",
+  "scan_mode": "deep"
 }
+```
+
+To run a quick scan instead, call `/api/v2/scan/quick` with the same
+body. The response is identical except `scan_mode` is `"quick"` and
+`estimated_completion` is roughly 30 seconds out:
+
+```bash
+curl -X POST https://api-v2.tumban.com/api/v2/scan/quick \
+  -H "Authorization: Bearer sk_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{"profile_url": "https://creator.example/username"}'
 ```
 
 ## Errors
@@ -127,6 +159,12 @@ const res = await fetch("https://api-v2.tumban.com/api/v2/scan", {
 
     To override per-scan, toggle **Send result to callback URL** on
     and enter a URL in the revealed **Callback URL** field.
+  </Step>
+  <Step title="Pick a scan mode">
+    Under **Scan mode**, choose **Deep scan** (default) or **Quick
+    scan**. Deep runs the full pipeline; quick is faster and cheaper
+    and skips link traversal, social scraping, and external context
+    search.
   </Step>
   <Step title="Submit and watch">
     Click **Submit Scan**. The new row appears at the top of the

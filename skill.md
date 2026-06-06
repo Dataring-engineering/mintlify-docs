@@ -190,11 +190,12 @@ POST /api/v2/scan/deep   (or /api/v2/scan/quick)
 
 ### `is_banned`
 
-`GET /api/v2/scans/{scan_id}` also returns a top-level `is_banned`
-field (`bool | null`). `null` until the ban-checker has evaluated the
-profile; then `true` if the upstream platform has banned the creator
-(404 / 410 / redirect on the profile URL) or `false` if the profile is
-still live. Useful for skipping enforcement on already-banned creators.
+`GET /api/v2/scans/{scan_id}` may also return a top-level `is_banned`
+field (`bool`). It is **absent** until the ban-checker has evaluated the
+profile (omitted, not `null`); then `true` if the upstream platform has
+banned the creator (404 / 410 / redirect on the profile URL) or `false`
+if the profile is still live. Test with `"is_banned" in response`.
+Useful for skipping enforcement on already-banned creators.
 
 ## Confidence semantics
 

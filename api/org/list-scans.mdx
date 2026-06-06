@@ -163,12 +163,15 @@ curl "https://api-v2.tumban.com/api/v2/org/scans?limit=5&recommendation=review_h
 
 ## Using the dashboard
 
-The **Home** page renders two tables that read from this endpoint:
+Both the **Home** and **History** pages read from this endpoint:
 
-- **Needs your attention** — scans from the last 30 days with
-  `recommendation` of `review_high` or `review_medium`.
-- **Recent scans** — the eight most recent scans of any status.
+- **Home → Action Items** tile — count of last-30-day scans with
+  `recommendation` of `review_high` or `review_medium`; clicking it
+  deep-links into **History** with that filter applied.
+- **Home → Recent scans** — the most recent scans of any status.
+- **History** — the full search/filter view (recommendation, scan mode,
+  date range, and URL/username search), with pagination.
 
-The page polls in-flight (`processing`) scans every five seconds and
-updates rows in place. Click any non-processing row to open
+The Home page polls in-flight (`processing`) scans every five seconds
+and updates rows in place. Click any non-processing row to open
 [Get scan](/api/scans/get) detail.

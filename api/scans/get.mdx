@@ -67,12 +67,14 @@ The response is the scan record. Fields you should rely on:
   When pipeline processing finished. `null` while still processing.
 </ResponseField>
 
-<ResponseField name="is_banned" type="boolean | null">
-  `null` until the ban-checker has evaluated this profile, then `true`
-  if the creator has been banned by the upstream platform (e.g. 404 /
-  410 / redirect on the profile URL) or `false` if the profile is
-  still live. Useful for skipping enforcement on already-banned
-  creators.
+<ResponseField name="is_banned" type="boolean">
+  Optional. **Absent** until the ban-checker has evaluated this profile
+  — the key is omitted (not `null`) on fresh scans — then `true` if the
+  creator has been banned by the upstream platform (e.g. 404 / 410 /
+  redirect on the profile URL) or `false` if the profile is still live.
+  Test for it with `"is_banned" in response`, not
+  `response["is_banned"] is None`. Useful for skipping enforcement on
+  already-banned creators.
 </ResponseField>
 
 <ResponseField name="callback_url" type="string">

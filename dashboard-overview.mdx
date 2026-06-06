@@ -24,8 +24,9 @@ The dashboard has three primary regions:
 
 | Item | What it covers | API pages |
 |------|----------------|-----------|
-| **Home** | Overview dashboard with **Needs your attention** and **Recent scans** panels, plus stat tiles. | [List org scans](/api/org/list-scans) |
-| **Scan** | Submit a single profile URL, view your local submission history (persisted in your browser). | [Create scan](/api/scans/create), [Get scan](/api/scans/get) |
+| **Home** | Overview dashboard: stat tiles (including an **Action Items** tile), a **Scan volume — last 30 days** chart, and a **Recent scans** section. | [List org scans](/api/org/list-scans) |
+| **Scan** | Submit a single profile URL (deep or quick) and watch it process. Past scans live on the **History** page. | [Create scan](/api/scans/create), [Get scan](/api/scans/get) |
+| **History** | Org-wide scan search and filtering — by recommendation, scan mode, date range, and URL/username. | [List org scans](/api/org/list-scans) |
 | **Usage** | Bar chart and donut chart for scan throughput and recommendation distribution. Visible to all members. Usage data is dashboard-only — there is no public API to read it. | (Dashboard-only.) |
 | **API Keys** | Create, list, and revoke API keys. | [Create API key](/api/keys/create), [List API keys](/api/keys/list), [Revoke API key](/api/keys/revoke) |
 | **Webhooks** | Set the default callback URL and rotate the webhook secret. | [Update org settings](/api/org/update-settings), [Rotate webhook secret](/api/webhook-secret/rotate) |

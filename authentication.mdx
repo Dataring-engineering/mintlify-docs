@@ -46,6 +46,15 @@ cannot mint, list, or revoke other keys. See
 [Errors → common detail strings](/api/errors#common-detail-strings) for
 the exact `detail` text to match on.
 
+<Note>
+  The dashboard also calls a few internal endpoints that are not part of
+  the public API — the Usage page charts (`GET /org/usage` and its
+  sub-routes) and the History page export (`GET /org/scans/export`).
+  These require a dashboard session too and reject `sk_…` keys with the
+  same `403`. They are UI implementation details, not a contract — don't
+  build against them.
+</Note>
+
 Each request looks up the key by SHA-256 hash, scopes the request to the
 key's organization, and updates the key's `last_used_at` timestamp.
 Revoked keys return `401 Invalid or revoked API key`.
@@ -82,6 +91,6 @@ mixed case.
 | Status | Meaning |
 |--------|---------|
 | 401 | Missing `Authorization` header, malformed `Bearer` prefix, or invalid/revoked credential. |
-| 403 | Token decodes but the active organization context is missing (session tokens only), **or** API-key auth was used on one of the five endpoints that require a dashboard session (see table above), **or** the role is insufficient on an admin-only endpoint. |
+| 403 | Token decodes but the active organization context is missing (session tokens only), **or** API-key auth was used on an endpoint that requires a dashboard session (the five management endpoints above, or a dashboard-internal endpoint), **or** the role is insufficient on an admin-only endpoint. |
 
 See [Errors](/api/errors) for the full error envelope.

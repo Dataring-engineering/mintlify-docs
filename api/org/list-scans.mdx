@@ -7,7 +7,8 @@ icon: "list"
 {/* sources: src/api/routes_auth.py:list_org_scans, src/db/mongodb.py:list_org_recent_scans */}
 
 List recent scans for the organization, sorted newest first. Useful for
-populating dashboards and review queues.
+populating dashboards and review queues. Accepts either credential kind
+— API keys (`sk_…`) and dashboard session tokens both work.
 
 ```http
 GET /api/v2/org/scans
@@ -175,3 +176,9 @@ Both the **Home** and **History** pages read from this endpoint:
 The Home page polls in-flight (`processing`) scans every five seconds
 and updates rows in place. Click any non-processing row to open
 [Get scan](/api/scans/get) detail.
+
+The History page's **Export** button downloads the current filter
+result as CSV or Excel via an internal endpoint
+(`GET /api/v2/org/scans/export`, capped at 10,000 rows). Unlike this
+endpoint, export requires a dashboard session — API keys get `403`. To
+export programmatically, paginate this endpoint instead.

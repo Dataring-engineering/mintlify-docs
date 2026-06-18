@@ -1,18 +1,59 @@
 ---
 title: "Create API key"
-description: "Generate a new API key for programmatic access."
+description: "Generate a new API key from the dashboard."
 icon: "key"
 ---
 
 {/* sources: src/api/routes_auth.py:create_key */}
 
+Create a new API key from the **API Keys** page in the dashboard. The
+raw key value is shown **exactly once**, the moment it is created — copy
+it and store it somewhere safe. Tumban keeps only the SHA-256 hash of
+the key, so a lost value can never be recovered; you simply revoke the
+key and create a new one.
+
+## Create a key
+
+<Steps>
+  <Step title="Open API Keys">
+    From the sidebar, click **API Keys**.
+  </Step>
+  <Step title="Name and create">
+    In the **Create New Key** tile, type a label in the **Key name**
+    field (placeholder `Key name (e.g. production)`), then press
+    **Create Key**. The label is how you'll recognise the key later in
+    the **Active Keys** list, so make it descriptive — for example
+    `ci-pipeline` or `production`. If you leave it blank, the key is
+    named `default`.
+  </Step>
+  <Step title="Copy the key">
+    The full key appears once in the highlighted box, beneath the prompt
+    *"New key — copy it now. It won't be shown again."* Click **Copy**.
+    Because Tumban stores only the SHA-256 hash, losing this value means
+    revoking the key and creating a replacement.
+  </Step>
+</Steps>
+
+<Warning>
+  The key value is displayed only at creation. If you lose it, revoke
+  the key and create a new one — there is no recovery.
+</Warning>
+
+<Tip>
+  Create a separate key per integration (CI, a script, a teammate's
+  laptop) rather than sharing one. Each key shows up individually under
+  **Active Keys**, so you can revoke a single integration's access
+  without disrupting the others.
+</Tip>
+
+{/*
+API reference — preserved for future publication, not currently shown.
+
 Generate a new API key. The raw key value is returned **exactly once**
 in the response — store it securely. Tumban only retains the SHA-256
 hash.
 
-```http
 POST /api/v2/org/api-keys
-```
 
 ## Request body
 
@@ -42,44 +83,17 @@ POST /api/v2/org/api-keys
 
 ## Example
 
-```bash
 curl -X POST https://api-v2.tumban.com/api/v2/org/api-keys \
   -H "Authorization: Bearer <your-token>" \
   -H "Content-Type: application/json" \
   -d '{"name": "ci-pipeline"}'
-```
 
-Status: `201 Created`.
+Status: 201 Created.
 
-```json
 {
   "key_id": "key_a1b2c3d4e5f6a7b8",
   "name": "ci-pipeline",
   "key": "sk_4f8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b",
   "created_at": "2026-04-29T12:00:00.123456+00:00"
 }
-```
-
-<Warning>
-  The `key` value is shown only on creation. If you lose it, revoke the
-  key and create a new one — there is no recovery.
-</Warning>
-
-## Using the dashboard
-
-<Steps>
-  <Step title="Open API Keys">
-    From the sidebar, click **API Keys**.
-  </Step>
-  <Step title="Name and create">
-    In the **Create New Key** tile, enter a label in the **Key name**
-    field (placeholder `Key name (e.g. production)`) and press
-    **Create Key**.
-  </Step>
-  <Step title="Copy the key">
-    The full key appears once in the highlighted box, with the prompt
-    *"New key — copy it now. It won't be shown again."* Click **Copy**.
-    Tumban only stores the SHA-256 hash; if you lose the value you must
-    revoke and create a new key.
-  </Step>
-</Steps>
+*/}

@@ -1,21 +1,51 @@
 ---
 title: "List API keys"
-description: "List active API keys for the organization."
+description: "View your organization's active API keys in the dashboard."
 icon: "list"
 ---
 
 {/* sources: src/api/routes_auth.py:list_keys, src/db/mongodb.py:list_api_keys */}
 
+Open **API Keys** in the sidebar to see every API key for your
+organization. Key hashes and raw key values are never shown — once a key
+is created, only its metadata is visible here.
+
+## View your keys
+
+The **Active Keys** tile lists every non-revoked key in the
+organization. Each row shows:
+
+- **Key id** — the stable `key_<16-hex>` identifier you use to
+  [revoke the key](/api/keys/revoke).
+- **Label** — the name assigned when the key was created.
+- **Created** — when the key was created.
+
+From this list you can identify a key by its label and revoke it
+directly (see [Revoke API key](/api/keys/revoke)).
+
+<Note>
+  The dashboard does not currently surface a key's last-used time, who
+  created it, or the audit trail for revoked keys. Those fields exist on
+  the records but aren't shown in this view yet.
+</Note>
+
+<Tip>
+  Descriptive labels make this list far easier to manage — if every key
+  is named `default`, you can't tell them apart. See
+  [Create API key](/api/keys/create) for naming guidance.
+</Tip>
+
+{/*
+API reference — preserved for future publication, not currently shown.
+
 List the organization's API keys. Key hashes and raw values are never
 returned.
 
 By default the response includes only active (non-revoked) keys. Pass
-`?include_revoked=true` to also receive revoked keys with their audit
-trail (`revoked_at`, `revoked_by`).
+?include_revoked=true to also receive revoked keys with their audit
+trail (revoked_at, revoked_by).
 
-```http
 GET /api/v2/org/api-keys
-```
 
 ## Query parameters
 
@@ -79,12 +109,9 @@ GET /api/v2/org/api-keys
 
 ### Active keys only (default)
 
-```bash
 curl https://api-v2.tumban.com/api/v2/org/api-keys \
   -H "Authorization: Bearer sk_xxx"
-```
 
-```json
 {
   "api_keys": [
     {
@@ -98,16 +125,12 @@ curl https://api-v2.tumban.com/api/v2/org/api-keys \
     }
   ]
 }
-```
 
 ### Including revoked keys (audit-trail view)
 
-```bash
 curl "https://api-v2.tumban.com/api/v2/org/api-keys?include_revoked=true" \
   -H "Authorization: Bearer sk_xxx"
-```
 
-```json
 {
   "api_keys": [
     {
@@ -132,12 +155,4 @@ curl "https://api-v2.tumban.com/api/v2/org/api-keys?include_revoked=true" \
     }
   ]
 }
-```
-
-## Using the dashboard
-
-Open **API Keys** in the sidebar. The **Active Keys** tile lists every
-non-revoked key for the organization, showing the key id, label, and
-created-at timestamp. The dashboard does not currently surface
-`last_used_at`, `created_by`, or the audit-trail fields — read those
-from this endpoint directly.
+*/}
